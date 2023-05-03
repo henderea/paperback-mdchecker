@@ -1,0 +1,29 @@
+{
+  "name": "paperback-mdchecker",
+  "version": "1.0.0",
+  "description": "A chapter update check managing server",
+  "main": "index.js",
+  "repository": "git@github.com:henderea/paperback-mdchecker.git",
+  "author": "Eric Henderson <henderea@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
+    "@typescript-eslint/parser": "^5.58.0",
+    "eslint": "^8.38.0",
+    "eslint-config-henderea": "1.1.7",
+    "eslint-plugin-import": "^2.27.5",
+    "typescript": "^5.0.4"
+  },
+  "eslintConfig": {
+    "extends": "henderea"
+  }
+}
