@@ -1,19 +1,35 @@
-require('dotenv').config();
+if(process.env.NODE_ENV != 'production') {
+  require('dotenv').config();
+}
 
-const dbHost = process.env.dbHost;
-const dbPort = parseInt(process.env.dbPort);
-const dbName = process.env.dbName;
-const dbUser = process.env.dbUser;
-const dbPass = process.env.dbPass;
-const serverPort = parseInt(process.env.serverPort);
-const serverHost = process.env.serverHost;
+function processPort(raw) {
+  if(raw) {
+    const port = parseInt(`${raw}`);
+    if(port > 0) {
+      return port;
+    }
+  }
+  return null;
+}
+
+function processString(raw) {
+  if(raw) {
+    raw = `${raw}`;
+    if(raw.length > 0) {
+      return raw;
+    }
+  }
+  return null;
+}
+
+const expressPort = processPort(process.env.EXPRESS_PORT);
+const expressHost = processString(process.env.EXPRESS_HOST);
+const expressSocketPath = processString(process.env.EXPRESS_SOCKET_PATH);
+const updateSchedule = processString(process.env.UPDATE_SCHEDULE) || '*/20 * * * *';
 
 module.exports = {
-  dbHost,
-  dbPort,
-  dbName,
-  dbUser,
-  dbPass,
-  serverPort,
-  serverHost
+  expressPort,
+  expressHost,
+  expressSocketPath,
+  updateSchedule
 };
