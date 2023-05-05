@@ -24,7 +24,11 @@ class Users {
 const users = new Users();
 
 async function updateUsers() {
-  users.users = await listUsers();
+  try {
+    users.users = await listUsers();
+  } catch (e) {
+    console.error('Encountered error updating users', e);
+  }
 }
 
 schedule.scheduleJob(userUpdateSchedule, updateUsers);
