@@ -26,10 +26,12 @@ const expressPort = processPort(process.env.EXPRESS_PORT);
 const expressHost = processString(process.env.EXPRESS_HOST);
 const expressSocketPath = processString(process.env.EXPRESS_SOCKET_PATH);
 const updateSchedule = processString(process.env.UPDATE_SCHEDULE) || '*/20 * * * *';
+const userUpdateSchedule = processString(process.env.USER_UPDATE_SCHEDULE) || '*/20 * * * *';
 
 module.exports = {
   expressPort,
   expressHost,
   expressSocketPath,
-  updateSchedule
+  updateSchedule,
+  userUpdateSchedule
 };

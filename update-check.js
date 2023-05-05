@@ -1,9 +1,10 @@
+const { updateSchedule } = require('./env');
+
 const schedule = require('node-schedule');
 const got = require('got');
 
 const { shutdownPool, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./db');
 
-const { updateSchedule } = require('./env');
 
 const { URLBuilder } = require('./UrlBuilder');
 
@@ -97,12 +98,11 @@ async function queryUpdates() {
 
 schedule.scheduleJob(updateSchedule, queryUpdates);
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT signal received: exiting scheduler');
-  schedule.gracefulShutdown().then(() => {
-    console.log('Scheduler shut down');
-    return shutdownPool();
-  }).then(() => {
-    console.log('Database pool shut down');
-  });
+  await schedule.gracefulShutdown();
+  console.log('Scheduler shut down; shutting down database pool');
+  await shutdownPool();
+  console.log('Database pool shut down; exiting');
+  process.exit(0);
 });

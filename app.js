@@ -1,19 +1,43 @@
-const { expressPort, expressHost, expressSocketPath } = require('./env');
+const { expressPort, expressHost, expressSocketPath, userUpdateSchedule } = require('./env');
+
+const schedule = require('node-schedule');
 
 const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownPool, checkUser, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./db');
+const { shutdownPool, listUsers, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./db');
 
 const app = express();
+
+class Users {
+  constructor() {
+    this._users = [];
+  }
+
+  get users() { return this._users; }
+  set users(users) { this._users = users; }
+
+  hasUser(userId) { return this.users.includes(userId); }
+}
+
+const users = new Users();
+
+async function updateUsers() {
+  users.users = await listUsers();
+}
+
+schedule.scheduleJob(userUpdateSchedule, updateUsers);
+
+updateUsers();
+
+function checkUser(userId) {
+  return users.hasUser(userId);
+}
 
 // unknown | updated | current | no-user | error
 async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
   try {
-    if(!await checkUser(userId)) {
-      return 'no-user';
-    }
     const lastUpdate = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0) {
       await insertMangaRecord(userId, mangaId, epoch);
@@ -27,13 +51,30 @@ async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
   }
 }
 
+/**
+ * Header: user-id
+ * query: mangaId
+ * query: lastCheckEpoch
+ *
+ * returns: { epoch, state } (as json)
+ * where epoch is a number and state is 'unknown', 'updated', 'current', 'no-user', or 'error'
+ */
 app.get('/manga-check', async (req, res) => {
-  const userId = req.query.userId;
-  const mangaId = req.query.mangaId;
-  const lastCheckEpoch = parseInt(req.query.lastCheckEpoch ?? '0');
-  const epoch = Date.now();
-  const state = await determineState(userId, mangaId, lastCheckEpoch, epoch);
-  res.json({ epoch, state });
+  try {
+    const userId = req.header('user-id');
+    if(!checkUser(userId)) {
+      res.json({ epoch: 0, state: 'no-user' });
+      return;
+    }
+    const mangaId = req.query.mangaId;
+    const lastCheckEpoch = parseInt(req.query.lastCheckEpoch ?? '0');
+    const epoch = Date.now();
+    const state = await determineState(userId, mangaId, lastCheckEpoch, epoch);
+    res.json({ epoch, state });
+  } catch (e) {
+    console.error('Encountered error in request handler', e);
+    res.json({ epoch: 0, state: 'error' });
+  }
 });
 
 function startServerListen() {
@@ -58,14 +99,15 @@ function startServerListen() {
 function start() {
   const server = startServerListen();
   const httpTerminator = createHttpTerminator({ server });
-  process.on('SIGINT', () => {
-    console.log('SIGINT signal received: closing HTTP server');
-    httpTerminator.terminate().then(() => {
-      console.log('HTTP server closed');
-      return shutdownPool();
-    }).then(() => {
-      console.log('Database pool shut down');
-    });
+  process.on('SIGINT', async () => {
+    console.log('SIGINT signal received; closing HTTP server');
+    await httpTerminator.terminate();
+    console.log('HTTP server closed; shutting down scheduler');
+    await schedule.gracefulShutdown();
+    console.log('Scheduler shut down, shutting down database pool');
+    await shutdownPool();
+    console.log('Database pool shut down; exiting');
+    process.exit(0);
   });
 }
 

@@ -16,9 +16,12 @@ async function query(text, values = [], rowMode = null) {
   return pool.query(q);
 }
 
-async function checkUser(userId) {
-  const result = await query('select count(0) as count from user where user_id = $1', [userId]);
-  return result.rows[0].count > 0;
+async function listUsers() {
+  const result = await query('select user_id from user', [], 'array');
+  if(result.rowCount <= 0) {
+    return [];
+  }
+  return result.rows.map((r) => r[0]);
 }
 
 async function getLastUpdate(userId, mangaId) {
@@ -57,4 +60,4 @@ async function updateMangaRecordsForQuery(mangaIds, epoch) {
   await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
 }
 
-module.exports = { shutdownPool, query, checkUser, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery };
+module.exports = { shutdownPool, query, listUsers, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery };
