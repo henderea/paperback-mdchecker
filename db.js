@@ -60,4 +60,14 @@ async function updateMangaRecordsForQuery(mangaIds, epoch) {
   await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
 }
 
-module.exports = { shutdownPool, query, listUsers, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery };
+module.exports = {
+  shutdownPool,
+  query,
+  listUsers,
+  getLastUpdate,
+  insertMangaRecord,
+  updateMangaRecordForCheck,
+  getMangaIdsForQuery,
+  getLatestUpdate,
+  updateMangaRecordsForQuery
+};

@@ -6,34 +6,19 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownPool, listUsers, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./db');
+const { shutdownPool, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./db');
+
+const { shutdownHandler } = require('./ShutdownHandler');
+
+const { UserList } = require('./UserList');
 
 const app = express();
 
-class Users {
-  constructor() {
-    this._users = [];
-  }
+const users = new UserList();
 
-  get users() { return this._users; }
-  set users(users) { this._users = users; }
+schedule.scheduleJob(userUpdateSchedule, () => users.update());
 
-  hasUser(userId) { return this.users.includes(userId); }
-}
-
-const users = new Users();
-
-async function updateUsers() {
-  try {
-    users.users = await listUsers();
-  } catch (e) {
-    console.error('Encountered error updating users', e);
-  }
-}
-
-schedule.scheduleJob(userUpdateSchedule, updateUsers);
-
-updateUsers();
+users.update();
 
 function checkUser(userId) {
   return users.hasUser(userId);
@@ -103,16 +88,15 @@ function startServerListen() {
 function start() {
   const server = startServerListen();
   const httpTerminator = createHttpTerminator({ server });
-  process.on('SIGINT', async () => {
-    console.log('SIGINT signal received; closing HTTP server');
-    await httpTerminator.terminate();
-    console.log('HTTP server closed; shutting down scheduler');
-    await schedule.gracefulShutdown();
-    console.log('Scheduler shut down, shutting down database pool');
-    await shutdownPool();
-    console.log('Database pool shut down; exiting');
-    process.exit(0);
-  });
+  shutdownHandler()
+    .log('SIGINT signal received; closing HTTP server')
+    .thenDo(httpTerminator.terminate)
+    .thenLog('HTTP server closed; shutting down scheduler')
+    .thenDo(schedule.gracefulShutdown)
+    .thenLog('Scheduler shut down, shutting down database pool')
+    .thenDo(shutdownPool)
+    .thenLog('Database pool shut down; exiting')
+    .thenExit();
 }
 
 start();

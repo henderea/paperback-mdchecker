@@ -5,30 +5,30 @@ const got = require('got');
 
 const { shutdownPool, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./db');
 
-
 const { URLBuilder } = require('./UrlBuilder');
 
-const sec = 1000;
-const min = sec * 60;
-const hour = min * 60;
-const day = hour * 24;
-const week = day * 7;
+const { shutdownHandler } = require('./ShutdownHandler');
+
+const { Duration } = require('./utils');
 
 const MANGADEX_DOMAIN = 'https://mangadex.org';
 const MANGADEX_API = 'https://api.mangadex.org';
 
+const MAX_REQUESTS = 100;
+const PAGE_SIZE = 100;
+
 async function findUpdatedManga(mangaIds, latestUpdate) {
   let offset = 0;
-  const maxRequests = 100;
   let loadNextPage = true;
   const updatedManga = [];
   const time = new Date(latestUpdate);
   const updatedAt = time.toISOString().split('.')[0];
   console.log(`Fetching manga updated since ${updatedAt}`);
+
   while(loadNextPage) {
     const url = new URLBuilder(MANGADEX_API)
       .addPathComponent('chapter')
-      .addQueryParameter('limit', 100)
+      .addQueryParameter('limit', PAGE_SIZE)
       .addQueryParameter('offset', offset)
       .addQueryParameter('publishAtSince', updatedAt)
       .addQueryParameter('order', { 'publishAt': 'desc' })
@@ -64,8 +64,8 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
       }
     }
 
-    offset = offset + 100;
-    if(json.total <= offset || offset >= (100 * maxRequests)) {
+    offset = offset + PAGE_SIZE;
+    if(json.total <= offset || offset >= (PAGE_SIZE * MAX_REQUESTS)) {
       loadNextPage = false;
     }
   }
@@ -73,18 +73,23 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
   return updatedManga;
 }
 
+async function determineLatestUpdate(epoch) {
+  const latestUpdate = await getLatestUpdate();
+  if(latestUpdate <= 0) {
+    return epoch - Duration.DAY;
+  }
+  return latestUpdate - Duration.MINUTE;
+}
+
 async function queryUpdates() {
   try {
     const epoch = Date.now();
-    const mangaIds = await getMangaIdsForQuery(epoch - week);
+    const mangaIds = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) {
       console.log('No manga to check');
       return;
     }
-    let latestUpdate = await getLatestUpdate();
-    if(latestUpdate <= 0) {
-      latestUpdate = epoch - day;
-    }
+    const latestUpdate = await determineLatestUpdate(epoch);
     const updatedManga = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) {
       console.log('No updates found');
@@ -98,11 +103,10 @@ async function queryUpdates() {
 
 schedule.scheduleJob(updateSchedule, queryUpdates);
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT signal received: exiting scheduler');
-  await schedule.gracefulShutdown();
-  console.log('Scheduler shut down; shutting down database pool');
-  await shutdownPool();
-  console.log('Database pool shut down; exiting');
-  process.exit(0);
-});
+shutdownHandler()
+  .log('SIGINT signal received: exiting scheduler')
+  .thenDo(schedule.gracefulShutdown)
+  .thenLog('Scheduler shut down; shutting down database pool')
+  .thenDo(shutdownPool)
+  .thenLog('Database pool shut down; exiting')
+  .thenExit(0);
