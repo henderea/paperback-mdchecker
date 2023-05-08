@@ -1,15 +1,15 @@
-const { updateSchedule } = require('./env');
+const { updateSchedule } = require('./lib/env');
 
 const schedule = require('node-schedule');
 const got = require('got');
 
-const { shutdownPool, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./db');
+const { shutdownPool, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./lib/db');
 
-const { URLBuilder } = require('./UrlBuilder');
+const { URLBuilder } = require('./lib/UrlBuilder');
 
-const { shutdownHandler } = require('./ShutdownHandler');
+const { shutdownHandler } = require('./lib/ShutdownHandler');
 
-const { Duration } = require('./utils');
+const { Duration } = require('./lib/utils');
 
 const MANGADEX_DOMAIN = 'https://mangadex.org';
 const MANGADEX_API = 'https://api.mangadex.org';

@@ -1,4 +1,4 @@
-const { expressPort, expressHost, expressSocketPath, userUpdateSchedule } = require('./env');
+const { expressPort, expressHost, expressSocketPath, userUpdateSchedule } = require('./lib/env');
 
 const schedule = require('node-schedule');
 
@@ -6,11 +6,11 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownPool, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./db');
+const { shutdownPool, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
 
-const { shutdownHandler } = require('./ShutdownHandler');
+const { shutdownHandler } = require('./lib/ShutdownHandler');
 
-const { UserList } = require('./UserList');
+const { UserList } = require('./lib/UserList');
 
 const app = express();
 
