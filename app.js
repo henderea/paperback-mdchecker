@@ -6,7 +6,7 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownPool, getRecentUpdateCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
+const { shutdownPool, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
 
 const { shutdownHandler } = require('./lib/ShutdownHandler');
 
@@ -29,14 +29,14 @@ function checkUser(userId) {
 // unknown | updated | current | no-user | error
 async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
   try {
-    const recentUpdateCount = await getRecentUpdateCount(userId, epoch - Duration.SECONDS(10));
+    const recentCheckCount = await getRecentCheckCount(userId, epoch - Duration.SECONDS(10));
     const lastUpdate = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0) {
       await insertMangaRecord(userId, mangaId, epoch);
       return 'unknown';
     }
     await updateMangaRecordForCheck(userId, mangaId, epoch);
-    if(recentUpdateCount < 2) { return 'updated'; }
+    if(recentCheckCount < 2) { return 'updated'; }
     return lastUpdate < lastCheckEpoch ? 'current' : 'updated';
   } catch (e) {
     console.error('Encountered error determining state', e);
