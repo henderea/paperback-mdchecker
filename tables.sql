@@ -13,3 +13,4 @@ create table user_manga (
 );
 
 create index ix_user_manga_manga_id_last_check on user_manga (manga_id, last_check);
+create index ix_user_manga_user_id_last_check on user_manga (user_id, last_check);
