@@ -1,3 +1,4 @@
 node_modules
 .env
 processes.json
+ecosystem.config.js
