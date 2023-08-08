@@ -6,8 +6,8 @@ create table user_id (
 create table user_manga (
   user_id text not null,
   manga_id text not null,
-  last_check integer,
-  last_update integer,
+  last_check bigint,
+  last_update bigint,
   constraint pk_user_manga primary key (user_id, manga_id),
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );
