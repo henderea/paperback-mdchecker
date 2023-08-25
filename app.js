@@ -29,7 +29,7 @@ function checkUser(userId) {
 // unknown | updated | current | no-user | error
 async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
   try {
-    const recentCheckCount = await getRecentCheckCount(userId, epoch - Duration.SECONDS(10));
+    const recentCheckCount = await getRecentCheckCount(userId, epoch - Duration.SECONDS(5));
     const lastUpdate = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0) {
       await insertMangaRecord(userId, mangaId, epoch);
