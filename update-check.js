@@ -86,13 +86,13 @@ async function queryUpdates() {
     const epoch = Date.now();
     const mangaIds = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) {
-      console.log('No manga to check');
+      // console.log('No manga to check');
       return;
     }
     const latestUpdate = await determineLatestUpdate(epoch);
     const updatedManga = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) {
-      console.log('No updates found');
+      // console.log('No updates found');
       return;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
