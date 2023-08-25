@@ -6,7 +6,7 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownPool, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
+const { shutdownClient, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
 
 const { shutdownHandler } = require('./lib/ShutdownHandler');
 
@@ -97,9 +97,9 @@ function start() {
     .thenDo(httpTerminator.terminate)
     .thenLog('HTTP server closed; shutting down scheduler')
     .thenDo(schedule.gracefulShutdown)
-    .thenLog('Scheduler shut down, shutting down database pool')
-    .thenDo(shutdownPool)
-    .thenLog('Database pool shut down; exiting')
+    .thenLog('Scheduler shut down, shutting down database client')
+    .thenDo(shutdownClient)
+    .thenLog('Database client shut down; exiting')
     .thenExit();
 }
 

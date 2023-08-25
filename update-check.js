@@ -3,7 +3,7 @@ const { updateSchedule } = require('./lib/env');
 const schedule = require('node-schedule');
 const got = require('got');
 
-const { shutdownPool, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./lib/db');
+const { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./lib/db');
 
 const { URLBuilder } = require('./lib/UrlBuilder');
 
@@ -106,7 +106,7 @@ schedule.scheduleJob(updateSchedule, queryUpdates);
 shutdownHandler()
   .log('SIGINT signal received: exiting scheduler')
   .thenDo(schedule.gracefulShutdown)
-  .thenLog('Scheduler shut down; shutting down database pool')
-  .thenDo(shutdownPool)
-  .thenLog('Database pool shut down; exiting')
+  .thenLog('Scheduler shut down; shutting down database client')
+  .thenDo(shutdownClient)
+  .thenLog('Database client shut down; exiting')
   .thenExit(0);
