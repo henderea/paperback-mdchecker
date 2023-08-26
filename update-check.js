@@ -23,7 +23,7 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
   const updatedManga = [];
   const time = new Date(latestUpdate);
   const updatedAt = time.toISOString().split('.')[0];
-  console.log(`Fetching manga updated since ${updatedAt}`);
+  // console.log(`Fetching manga updated since ${updatedAt}`);
 
   while(loadNextPage) {
     const url = new URLBuilder(MANGADEX_API)
