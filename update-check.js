@@ -75,7 +75,7 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
 
 async function determineLatestUpdate(epoch) {
   const latestUpdate = await getLatestUpdate();
-  if(latestUpdate <= 0) {
+  if(latestUpdate <= 0) { // if we can't figure out the last update timestamp, look 1 day back
     return epoch - Duration.DAY;
   }
   return latestUpdate - Duration.MINUTE;
@@ -85,13 +85,13 @@ async function queryUpdates() {
   try {
     const epoch = Date.now();
     const mangaIds = await getMangaIdsForQuery(epoch - Duration.WEEK);
-    if(!mangaIds) {
+    if(!mangaIds) { // no manga fetched by the app recently
       // console.log('No manga to check');
       return;
     }
     const latestUpdate = await determineLatestUpdate(epoch);
     const updatedManga = await findUpdatedManga(mangaIds, latestUpdate);
-    if(!updatedManga || updatedManga.length == 0) {
+    if(!updatedManga || updatedManga.length == 0) { // no updates found
       // console.log('No updates found');
       return;
     }

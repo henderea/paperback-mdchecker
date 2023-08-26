@@ -6,7 +6,7 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownClient, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck } = require('./lib/db');
+const { shutdownClient, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getLastCheck } = require('./lib/db');
 
 const { shutdownHandler } = require('./lib/ShutdownHandler');
 
@@ -30,13 +30,19 @@ function checkUser(userId) {
 async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
   try {
     const recentCheckCount = await getRecentCheckCount(userId, epoch - Duration.SECONDS(5));
+    const lastCheck = await getLastCheck(userId, mangaId);
     const lastUpdate = await getLastUpdate(userId, mangaId);
-    if(lastUpdate < 0) {
+    if(lastUpdate < 0 || lastCheck < 0) { // not fetched before
       await insertMangaRecord(userId, mangaId, epoch);
       return 'unknown';
     }
     await updateMangaRecordForCheck(userId, mangaId, epoch);
-    if(recentCheckCount < 2) { return 'updated'; }
+    if(lastCheck < (epoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
+      return 'unknown';
+    }
+    if(recentCheckCount < 2) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
+      return 'updated';
+    }
     return lastUpdate < lastCheckEpoch ? 'current' : 'updated';
   } catch (e) {
     console.error('Encountered error determining state', e);
@@ -55,7 +61,7 @@ async function determineState(userId, mangaId, lastCheckEpoch, epoch) {
 app.get('/manga-check', async (req, res) => {
   try {
     const userId = req.header('user-id');
-    if(!checkUser(userId)) {
+    if(!checkUser(userId)) { // if the user isn't in the table, reject the request right away
       res.json({ epoch: 0, state: 'no-user' });
       return;
     }
@@ -71,19 +77,19 @@ app.get('/manga-check', async (req, res) => {
 });
 
 function startServerListen() {
-  if(expressSocketPath) {
+  if(expressSocketPath) { // using unix socket
     return app.listen(expressSocketPath, () => {
       console.log(`Server running on unix socket ${expressSocketPath}`);
     });
-  } else if(expressHost && expressPort) {
+  } else if(expressHost && expressPort) { // using host & port
     return app.listen(expressPort, expressHost, () => {
       console.log(`Server running on ${expressHost}:${expressPort}`);
     });
-  } else if(expressPort) {
+  } else if(expressPort) { // using just port
     return app.listen(expressPort, () => {
       console.log(`Server running on port ${expressPort}`);
     });
-  } else {
+  } else { // nothing configured
     console.error('No valid configuration found');
     process.exit(1);
   }
