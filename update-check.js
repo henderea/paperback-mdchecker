@@ -108,9 +108,11 @@ async function queryUpdates() {
 schedule.scheduleJob(updateSchedule, queryUpdates);
 
 shutdownHandler()
-  .log('SIGINT signal received: exiting scheduler')
+  // .log('SIGINT signal received: exiting scheduler')
+  .log('SIGINT signal received; shutting down')
   .thenDo(schedule.gracefulShutdown)
-  .thenLog('Scheduler shut down; shutting down database client')
+  // .thenLog('Scheduler shut down; shutting down database client')
   .thenDo(shutdownClient)
-  .thenLog('Database client shut down; exiting')
+  // .thenLog('Database client shut down; exiting')
+  .thenLog('Shutdown complete')
   .thenExit(0);

@@ -144,13 +144,15 @@ function start() {
   const server = startServerListen();
   const httpTerminator = createHttpTerminator({ server });
   shutdownHandler()
-    .log('SIGINT signal received; closing HTTP server')
+    // .log('SIGINT signal received; closing HTTP server')
+    .log('SIGINT signal received; shutting down')
     .thenDo(httpTerminator.terminate)
-    .thenLog('HTTP server closed; shutting down scheduler')
+    // .thenLog('HTTP server closed; shutting down scheduler')
     .thenDo(schedule.gracefulShutdown)
-    .thenLog('Scheduler shut down, shutting down database client')
+    // .thenLog('Scheduler shut down, shutting down database client')
     .thenDo(shutdownClient)
-    .thenLog('Database client shut down; exiting')
+    // .thenLog('Database client shut down; exiting')
+    .thenLog('Shutdown complete')
     .thenExit();
 }
 
