@@ -76,22 +76,30 @@ app.get('/manga-check', async (req, res) => {
   }
 });
 
+function prettyJsonResponse(res) {
+  return (data) => {
+    res.header('Content-Type','application/json');
+    res.send(JSON.stringify(data, null, 2));
+  };
+}
+
 app.get('/last-update-check', async (req, res) => {
+  const pjson = prettyJsonResponse(res);
   try {
     const userId = req.query.userId;
     if(!checkUser(userId)) {
-      res.json({ state: 'no-user' });
+      pjson({ state: 'no-user' });
       return;
     }
     const lastCheck = await getLatestUpdateCheck();
     if(!lastCheck) {
-      res.json({ state: 'unknown' });
+      pjson({ state: 'unknown' });
       return;
     }
     const start = parseInt(String(lastCheck.check_start_time));
     const startTime = new Date(start);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
-      res.json({
+      pjson({
         state: 'running',
         start: formatDate(startTime)
       });
@@ -100,7 +108,7 @@ app.get('/last-update-check', async (req, res) => {
     const end = parseInt(String(lastCheck.check_end_time));
     const endTime = new Date(end);
     const count = lastCheck.count;
-    res.json({
+    pjson({
       state: count < 0 ? 'no-series' : 'completed',
       start: formatDate(startTime),
       end: formatDate(endTime),
@@ -109,7 +117,7 @@ app.get('/last-update-check', async (req, res) => {
     });
   } catch (e) {
     console.error('Encountered error in last-update-check request handler', e);
-    res.json({ state: 'error' });
+    pjson({ state: 'error' });
   }
 });
 
