@@ -96,7 +96,7 @@ app.get('/last-update-check', async (req, res) => {
     if(lastUserCheck > 0) {
       const lastUserCheckTime = new Date(lastUserCheck);
       userData.lastUserFetch = formatDate(lastUserCheckTime);
-      const userUpdateCount = await getUserUpdateCount(userId, lastUserCheck);
+      const userUpdateCount = await getUserUpdateCount(userId);
       userData.updatesSinceLastFetch = userUpdateCount;
     }
     const lastCheck = await getLatestUpdateCheck();
