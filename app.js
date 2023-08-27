@@ -88,8 +88,8 @@ app.get('/last-update-check', async (req, res) => {
       res.json({ state: 'unknown' });
       return;
     }
-    console.log(lastCheck);
-    const startTime = new Date(lastCheck.check_start_time);
+    const start = parseInt(String(lastCheck.check_start_time));
+    const startTime = new Date(start);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
       res.json({
         state: 'running',
@@ -97,14 +97,14 @@ app.get('/last-update-check', async (req, res) => {
       });
       return;
     }
-    const endTime = new Date(lastCheck.check_end_time);
+    const end = parseInt(String(lastCheck.check_end_time));
+    const endTime = new Date(end);
     const count = lastCheck.count;
-    console.log(startTime, endTime, count);
     res.json({
       state: count < 0 ? 'no-series' : 'completed',
       start: formatDate(startTime),
       end: formatDate(endTime),
-      duration: formatDuration(lastCheck.check_end_time - lastCheck.check_start_time ),
+      duration: formatDuration(end - start),
       count
     });
   } catch (e) {
