@@ -99,7 +99,7 @@ app.get('/last-update-check', async (req, res) => {
     const endTime = new Date(lastCheck.check_end_time);
     const count = lastCheck.count;
     res.json({
-      state: 'completed',
+      state: count < 0 ? 'no-series' : 'completed',
       start: formatDate(startTime),
       end: formatDate(endTime),
       duration: formatDuration(lastCheck.check_end_time - lastCheck.check_start_time ),

@@ -98,8 +98,8 @@ async function queryUpdates() {
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
-    await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
     await updateMangaRecordsForQuery(updatedManga, epoch);
+    await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
   } catch (e) {
     console.error('Encountered error fetching updates', e);
   }
