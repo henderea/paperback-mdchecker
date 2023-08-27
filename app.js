@@ -80,12 +80,12 @@ app.get('/last-update-check', async (req, res) => {
   try {
     const userId = req.query.userId;
     if(!checkUser(userId)) {
-      res.json({ state: 'no-user' });
+      res.jsonp({ state: 'no-user' }, 2);
       return;
     }
     const lastCheck = await getLatestUpdateCheck();
     if(!lastCheck) {
-      res.json({ state: 'unknown' });
+      res.json({ state: 'unknown' }, 2);
       return;
     }
     const start = parseInt(String(lastCheck.check_start_time));
@@ -94,7 +94,7 @@ app.get('/last-update-check', async (req, res) => {
       res.json({
         state: 'running',
         start: formatDate(startTime)
-      });
+      }, 2);
       return;
     }
     const end = parseInt(String(lastCheck.check_end_time));
@@ -106,10 +106,10 @@ app.get('/last-update-check', async (req, res) => {
       end: formatDate(endTime),
       duration: formatDuration(end - start),
       count
-    });
+    }, 2);
   } catch (e) {
     console.error('Encountered error in last-update-check request handler', e);
-    res.json({ state: 'error' });
+    res.json({ state: 'error' }, 2);
   }
 });
 
