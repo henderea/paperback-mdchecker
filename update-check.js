@@ -3,7 +3,7 @@ const { updateSchedule } = require('./lib/env');
 const schedule = require('node-schedule');
 const got = require('got');
 
-const { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery } = require('./lib/db');
+const { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck } = require('./lib/db');
 
 const { URLBuilder } = require('./lib/UrlBuilder');
 
@@ -84,17 +84,21 @@ async function determineLatestUpdate(epoch) {
 async function queryUpdates() {
   try {
     const epoch = Date.now();
+    await addUpdateCheck(epoch);
     const mangaIds = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
       // console.log('No manga to check');
+      await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
     const latestUpdate = await determineLatestUpdate(epoch);
     const updatedManga = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       // console.log('No updates found');
+      await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
+    await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
     await updateMangaRecordsForQuery(updatedManga, epoch);
   } catch (e) {
     console.error('Encountered error fetching updates', e);

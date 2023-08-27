@@ -6,13 +6,13 @@ const express = require('express');
 const { createHttpTerminator } = require('http-terminator');
 
 
-const { shutdownClient, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getLastCheck } = require('./lib/db');
+const { shutdownClient, getRecentCheckCount, getLastUpdate, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck } = require('./lib/db');
 
 const { shutdownHandler } = require('./lib/ShutdownHandler');
 
 const { UserList } = require('./lib/UserList');
 
-const { Duration } = require('./lib/utils');
+const { Duration, formatDate, formatDuration } = require('./lib/utils');
 
 const app = express();
 
@@ -73,6 +73,41 @@ app.get('/manga-check', async (req, res) => {
   } catch (e) {
     console.error('Encountered error in request handler', e);
     res.json({ epoch: 0, state: 'error' });
+  }
+});
+
+app.get('/last-update-check', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if(!checkUser(userId)) {
+      res.json({ state: 'no-user' });
+      return;
+    }
+    const lastCheck = await getLatestUpdateCheck();
+    if(!lastCheck) {
+      res.json({ state: 'unknown' });
+      return;
+    }
+    const startTime = new Date(lastCheck.check_start_time);
+    if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
+      res.json({
+        state: 'running',
+        start: formatDate(startTime)
+      });
+      return;
+    }
+    const endTime = new Date(lastCheck.check_end_time);
+    const count = lastCheck.count;
+    res.json({
+      state: 'completed',
+      start: formatDate(startTime),
+      end: formatDate(endTime),
+      duration: formatDuration(lastCheck.check_end_time - lastCheck.check_start_time ),
+      count
+    });
+  } catch (e) {
+    console.error('Encountered error in last-update-check request handler', e);
+    res.json({ state: 'error' });
   }
 });
 
