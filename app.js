@@ -88,6 +88,7 @@ app.get('/last-update-check', async (req, res) => {
       res.json({ state: 'unknown' });
       return;
     }
+    console.log(lastCheck);
     const startTime = new Date(lastCheck.check_start_time);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
       res.json({
