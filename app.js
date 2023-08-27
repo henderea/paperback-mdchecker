@@ -107,7 +107,7 @@ app.get('/last-update-check', async (req, res) => {
     }
     const end = parseInt(String(lastCheck.check_end_time));
     const endTime = new Date(end);
-    const count = lastCheck.count;
+    const count = lastCheck.count ?? 0;
     pjson({
       state: count < 0 ? 'no-series' : 'completed',
       start: formatDate(startTime),
