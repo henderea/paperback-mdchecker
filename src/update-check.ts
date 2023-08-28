@@ -1,32 +1,32 @@
-const { updateSchedule } = require('./lib/env');
+import { updateSchedule } from 'lib/env';
 
-const schedule = require('node-schedule');
-const got = require('got');
+import schedule from 'node-schedule';
+import got from 'got';
 
-const { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck } = require('./lib/db');
+import { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck } from 'lib/db';
 
-const { URLBuilder } = require('./lib/UrlBuilder');
+import { URLBuilder } from 'lib/UrlBuilder';
 
-const { shutdownHandler } = require('./lib/ShutdownHandler');
+import { shutdownHandler } from 'lib/ShutdownHandler';
 
-const { Duration } = require('./lib/utils');
+import { Duration } from 'lib/utils';
 
-const MANGADEX_DOMAIN = 'https://mangadex.org';
-const MANGADEX_API = 'https://api.mangadex.org';
+const MANGADEX_DOMAIN: string = 'https://mangadex.org';
+const MANGADEX_API: string = 'https://api.mangadex.org';
 
-const MAX_REQUESTS = 100;
-const PAGE_SIZE = 100;
+const MAX_REQUESTS: number = 100;
+const PAGE_SIZE: number = 100;
 
-async function findUpdatedManga(mangaIds, latestUpdate) {
-  let offset = 0;
-  let loadNextPage = true;
-  const updatedManga = [];
-  const time = new Date(latestUpdate);
-  const updatedAt = time.toISOString().split('.')[0];
+async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<string[]> {
+  let offset: number = 0;
+  let loadNextPage: boolean = true;
+  const updatedManga: string[] = [];
+  const time: Date = new Date(latestUpdate);
+  const updatedAt: string = time.toISOString().split('.')[0];
   // console.log(`Fetching manga updated since ${updatedAt}`);
 
   while(loadNextPage) {
-    const url = new URLBuilder(MANGADEX_API)
+    const url: string = new URLBuilder(MANGADEX_API)
       .addPathComponent('chapter')
       .addQueryParameter('limit', PAGE_SIZE)
       .addQueryParameter('offset', offset)
@@ -57,7 +57,7 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
     }
 
     for(const chapter of json.data) {
-      const mangaId = chapter.relationships.filter((x) => x.type == 'manga')[0]?.id;
+      const mangaId = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
 
       if(mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
@@ -73,26 +73,26 @@ async function findUpdatedManga(mangaIds, latestUpdate) {
   return updatedManga;
 }
 
-async function determineLatestUpdate(epoch) {
-  const latestUpdate = await getLatestUpdate();
+async function determineLatestUpdate(epoch: number): Promise<number> {
+  const latestUpdate: number = await getLatestUpdate();
   if(latestUpdate <= 0) { // if we can't figure out the last update timestamp, look 1 day back
     return epoch - Duration.DAY;
   }
   return latestUpdate - Duration.MINUTE;
 }
 
-async function queryUpdates() {
+async function queryUpdates(): Promise<void> {
   try {
-    const epoch = Date.now();
+    const epoch: number = Date.now();
     await addUpdateCheck(epoch);
-    const mangaIds = await getMangaIdsForQuery(epoch - Duration.WEEK);
+    const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
       // console.log('No manga to check');
       await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
-    const latestUpdate = await determineLatestUpdate(epoch);
-    const updatedManga = await findUpdatedManga(mangaIds, latestUpdate);
+    const latestUpdate: number = await determineLatestUpdate(epoch);
+    const updatedManga: string[] = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       // console.log('No updates found');
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);

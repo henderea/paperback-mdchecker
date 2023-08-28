@@ -1,22 +1,24 @@
-class URLBuilder {
-  constructor(baseUrl) {
-    this.parameters = {};
-    this.pathComponents = [];
+export class URLBuilder {
+  private readonly parameters: Dictionary<any> = {};
+  private readonly pathComponents: string[] = [];
+  private readonly baseUrl: string;
+
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/(^\/)?(?=.*)(\/$)?/gim, '');
   }
 
-  addPathComponent(component) {
+  addPathComponent(component: string): this {
     this.pathComponents.push(component.replace(/(^\/)?(?=.*)(\/$)?/gim, ''));
     return this;
   }
 
-  addQueryParameter(key, value) {
+  addQueryParameter(key: string, value: any): this {
     this.parameters[key] = value;
     return this;
   }
 
-  buildUrl({ addTrailingSlash, includeUndefinedParameters } = { addTrailingSlash: false, includeUndefinedParameters: false }) {
-    let finalUrl = this.baseUrl + '/';
+  buildUrl({ addTrailingSlash, includeUndefinedParameters } = { addTrailingSlash: false, includeUndefinedParameters: false }): string {
+    let finalUrl: string = this.baseUrl + '/';
 
     finalUrl += this.pathComponents.join('/');
     finalUrl += addTrailingSlash ? '/' : '';
@@ -42,5 +44,3 @@ class URLBuilder {
     return finalUrl;
   }
 }
-
-module.exports = { URLBuilder };

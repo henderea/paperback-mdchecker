@@ -3,3 +3,4 @@ node_modules
 processes.json
 ecosystem.config.js
 yarn-error.log
+build

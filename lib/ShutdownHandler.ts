@@ -1,0 +1,32 @@
+class ShutdownHandler {
+  private readonly _actions: Array<() => void> = [];
+
+  constructor() {
+    process.on('SIGINT', async () => {
+      for(const action of this.actions) {
+        await action();
+      }
+    });
+  }
+
+  get actions(): Array<() => void> { return this._actions; }
+
+  do(action: (...args: any[]) => void, ...params: any[]) {
+    if(typeof action === 'function') {
+      this.actions.push(async () => action(...params));
+    }
+    return this;
+  }
+
+  log(logText: string) { return this.do(console.log, logText); }
+
+  exit(exitCode: number = 0) { return this.do(process.exit, exitCode); }
+
+  thenDo(action: (...args: any[]) => void, ...params: any[]) { return this.do(action, ...params); }
+
+  thenLog(logText: string) { return this.log(logText); }
+
+  thenExit(exitCode: number = 0) { return this.exit(exitCode); }
+}
+
+export function shutdownHandler(): ShutdownHandler { return new ShutdownHandler(); }
