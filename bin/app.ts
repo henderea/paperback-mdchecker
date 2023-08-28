@@ -4,7 +4,7 @@ import type { Application, Request, Response } from 'express';
 import type { User } from 'lib/UserList';
 import type { UpdateCheckResult } from 'lib/db';
 
-import { expressPort, expressHost, expressSocketPath, userUpdateSchedule } from 'lib/env';
+import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
 import schedule from 'node-schedule';
 
@@ -165,15 +165,21 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
 function startServerListen(): Server {
   if(expressSocketPath) { // using unix socket
     return app.listen(expressSocketPath, () => {
-      console.log(`Server running on unix socket ${expressSocketPath}`);
+      if(!noStartStopLogs) {
+        console.log(`Server running on unix socket ${expressSocketPath}`);
+      }
     });
   } else if(expressHost && expressPort) { // using host & port
     return app.listen(expressPort, expressHost, () => {
-      console.log(`Server running on ${expressHost}:${expressPort}`);
+      if(!noStartStopLogs) {
+        console.log(`Server running on ${expressHost}:${expressPort}`);
+      }
     });
   } else if(expressPort) { // using just port
     return app.listen(expressPort, () => {
-      console.log(`Server running on port ${expressPort}`);
+      if(!noStartStopLogs) {
+        console.log(`Server running on port ${expressPort}`);
+      }
     });
   } else { // nothing configured
     console.error('No valid configuration found');
@@ -185,11 +191,11 @@ function start(): void {
   const server: Server = startServerListen();
   const httpTerminator = createHttpTerminator({ server });
   shutdownHandler()
-    .log('SIGINT signal received; shutting down')
+    .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
     .thenDo(httpTerminator.terminate)
     .thenDo(schedule.gracefulShutdown)
     .thenDo(shutdownClient)
-    .thenLog('Shutdown complete')
+    .thenLogIf('Shutdown complete', !noStartStopLogs)
     .thenExit();
 }
 

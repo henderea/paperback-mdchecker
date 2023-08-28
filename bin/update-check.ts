@@ -1,4 +1,4 @@
-import { updateSchedule } from 'lib/env';
+import { updateSchedule, noStartStopLogs } from 'lib/env';
 
 import schedule from 'node-schedule';
 import got from 'got';
@@ -105,8 +105,8 @@ async function queryUpdates(): Promise<void> {
 schedule.scheduleJob(updateSchedule, queryUpdates);
 
 shutdownHandler()
-  .log('SIGINT signal received; shutting down')
+  .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
-  .thenLog('Shutdown complete')
+  .thenLogIf('Shutdown complete', !noStartStopLogs)
   .thenExit(0);

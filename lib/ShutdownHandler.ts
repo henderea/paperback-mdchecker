@@ -20,11 +20,15 @@ class ShutdownHandler {
 
   log(logText: string) { return this.do(console.log, logText); }
 
+  logIf(logText: string, condition: boolean) { return condition ? this.log(logText) : this; }
+
   exit(exitCode: number = 0) { return this.do(process.exit, exitCode); }
 
   thenDo(action: (...args: any[]) => void, ...params: any[]) { return this.do(action, ...params); }
 
   thenLog(logText: string) { return this.log(logText); }
+
+  thenLogIf(logText: string, condition: boolean) { return this.logIf(logText, condition); }
 
   thenExit(exitCode: number = 0) { return this.exit(exitCode); }
 }

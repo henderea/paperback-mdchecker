@@ -7,8 +7,8 @@
   "author": "Eric Henderson <henderea@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint bin lib ts-types",
-    "lint:fix": "eslint --fix bin lib ts-types",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "start": "ts-node ./bin/index.ts",
     "clean": "rm -rf build",
     "build": "yarn clean && yarn build:app && yarn build:update-check",
