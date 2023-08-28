@@ -4,7 +4,11 @@ import { Client, QueryResult, QueryResultRow } from 'pg';
 
 const client = new Client();
 
-client.connect();
+client.connect().catch((e) => {
+  console.error('Failed to connect to database!');
+  console.error(e);
+  process.exit(1);
+});
 
 export async function shutdownClient(): Promise<void> {
   await client.end();
