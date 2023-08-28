@@ -17,6 +17,10 @@ export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', { timeZone: 'US/Eastern', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', month: 'short', weekday: 'short' }).format(date);
 }
 
+export function formatEpoch(epoch: number): string {
+  return formatDate(new Date(epoch));
+}
+
 export function formatDuration(d: number): string {
   const h: number = Math.floor(d / (60 * 60 * 1000));
   const m: number = Math.floor((d / (60 * 1000)) % 60);
@@ -28,4 +32,8 @@ export function formatDuration(d: number): string {
   if(s > 0) { parts.push(`${s} s`); }
   if(ms > 0) { parts.push(`${ms} ms`); }
   return parts.join(' ');
+}
+
+export function ensureInt(v: number | string | any): number {
+  return parseInt(String(v));
 }

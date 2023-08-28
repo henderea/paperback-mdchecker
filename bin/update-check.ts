@@ -23,7 +23,6 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
   const updatedManga: string[] = [];
   const time: Date = new Date(latestUpdate);
   const updatedAt: string = time.toISOString().split('.')[0];
-  // console.log(`Fetching manga updated since ${updatedAt}`);
 
   while(loadNextPage) {
     const url: string = new URLBuilder(MANGADEX_API)
@@ -87,14 +86,12 @@ async function queryUpdates(): Promise<void> {
     await addUpdateCheck(epoch);
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
-      // console.log('No manga to check');
       await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
     const updatedManga: string[] = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
-      // console.log('No updates found');
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
@@ -108,11 +105,8 @@ async function queryUpdates(): Promise<void> {
 schedule.scheduleJob(updateSchedule, queryUpdates);
 
 shutdownHandler()
-  // .log('SIGINT signal received: exiting scheduler')
   .log('SIGINT signal received; shutting down')
   .thenDo(schedule.gracefulShutdown)
-  // .thenLog('Scheduler shut down; shutting down database client')
   .thenDo(shutdownClient)
-  // .thenLog('Database client shut down; exiting')
   .thenLog('Shutdown complete')
   .thenExit(0);

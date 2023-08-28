@@ -1,20 +1,24 @@
-import { expressPort, expressHost, expressSocketPath, userUpdateSchedule } from 'lib/env';
-
 import type { Server } from 'http';
+import type { Application, Request, Response } from 'express';
+
+import type { User } from 'lib/UserList';
+import type { UpdateCheckResult } from 'lib/db';
+
+import { expressPort, expressHost, expressSocketPath, userUpdateSchedule } from 'lib/env';
 
 import schedule from 'node-schedule';
 
-import express, { Application, Request, Response } from 'express';
+import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdateCount, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, UpdateCheckResult } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdateCount, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { UserList, User } from 'lib/UserList';
+import { UserList } from 'lib/UserList';
 
-import { Duration, formatDate, formatDuration } from 'lib/utils';
+import { Duration, formatEpoch, formatDuration, ensureInt } from 'lib/utils';
 
 const app: Application = express();
 
@@ -32,7 +36,7 @@ function getUser(userId: string | null | undefined): User | undefined {
   return users.getUser(userId);
 }
 
-type State = 'unknown' | 'updated' | 'current' | 'no-user' | 'error';
+declare type State = 'unknown' | 'updated' | 'current' | 'no-user' | 'error';
 
 async function determineState(userId: string, mangaId: string, lastCheckEpoch: number, epoch: number): Promise<State> {
   try {
@@ -77,7 +81,7 @@ app.get('/manga-check', async (req: Request, res: Response) => {
       res.json({ epoch: 0, state: 'error' });
       return;
     }
-    const lastCheckEpoch: number = parseInt((req.query.lastCheckEpoch as string | undefined) ?? '0');
+    const lastCheckEpoch: number = ensureInt(req.query.lastCheckEpoch ?? '0');
     const epoch: number = Date.now();
     const state: State = await determineState(userId, mangaId, lastCheckEpoch, epoch);
     res.json({ epoch, state });
@@ -87,23 +91,6 @@ app.get('/manga-check', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * query: userId
- *
- * returns pretty JSON with one of:
- *  - { state: "error" }
- *  - { state: "no-user" }
- *  - { state: "unknown" }
- *  - { state: "running", start: <time string> }
- *  - { state: "no-series", start: <time string>, end: <time string>, duration: <formatted duration string>, count: -1 }
- *  - { state: "completed", start: <time string>, end: <time string>, duration: <formatted duration string>, count: <number> }
- *
- * With everything other than "error" and "no-user" potentially also having these additional fields related to the provided userId:
- *  - lastUserFetch: <time string>
- *  - updatesSinceLastFetch: <number>
- *
- * Note that "no-series" is for when there were no series to check because nothing has been fetched in the past week.
- */
 function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   return (data: Dictionary<any>) => {
     res.header('Content-Type','application/json');
@@ -111,6 +98,20 @@ function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   };
 }
 
+/**
+ * query: userId
+ *
+ * returns pretty JSON with one of:
+ *  - { state: "error" | "no-user" | "unknown" }
+ *  - { state: "running", start: <time string> }
+ *  - { state: "no-series" | "completed", start: <time string>, end: <time string>, duration: <formatted duration string>, count: <number> }
+ *
+ * Everything other than "error" and "no-user" potentially also has these additional fields related to the provided userId:
+ *  - lastUserFetch: <time string>
+ *  - updatesSinceLastFetch: <number>
+ *
+ * Note that "no-series" is for when there were no series to check because nothing has been fetched in the past week.
+ */
 app.get('/last-update-check', async (req: Request, res: Response) => {
   const pjson = prettyJsonResponse(res);
   try {
@@ -123,35 +124,35 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
     const userData: { lastUserFetch?: string, updatesSinceLastFetch?: number } = {};
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
-      const lastUserCheckTime: Date = new Date(lastUserCheck);
-      userData.lastUserFetch = formatDate(lastUserCheckTime);
-      const userUpdateCount: number = await getUserUpdateCount(userId, lastUserCheck - Duration.HOURS(6));
-      userData.updatesSinceLastFetch = userUpdateCount;
+      userData.lastUserFetch = formatEpoch(lastUserCheck);
+      userData.updatesSinceLastFetch = await getUserUpdateCount(userId, lastUserCheck - Duration.HOURS(6));
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();
     if(!lastCheck) {
       pjson({ state: 'unknown', ...userData });
       return;
     }
-    const start: number = parseInt(String(lastCheck.check_start_time));
-    const startTime: Date = new Date(start);
+    const startEpoch: number = ensureInt(lastCheck.check_start_time);
+    const start: string = formatEpoch(startEpoch);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
       pjson({
         state: 'running',
-        start: formatDate(startTime),
+        start,
         ...userData
       });
       return;
     }
-    const end: number = parseInt(String(lastCheck.check_end_time));
-    const endTime: Date = new Date(end);
+    const endEpoch: number = ensureInt(lastCheck.check_end_time);
+    const end: string = formatEpoch(endEpoch);
+    const duration: string = formatDuration(endEpoch - startEpoch);
     const updateCount: number = lastCheck.update_count;
-    const count: number | undefined = user.hasAnyRole('ADMIN') ? updateCount : undefined;
+    const count: number | undefined = user.isAdmin ? updateCount : undefined;
+    const state: string = updateCount < 0 ? 'no-series' : 'completed';
     pjson({
-      state: updateCount < 0 ? 'no-series' : 'completed',
-      start: formatDate(startTime),
-      end: formatDate(endTime),
-      duration: formatDuration(end - start),
+      state,
+      start,
+      end,
+      duration,
       count,
       ...userData
     });
@@ -184,14 +185,10 @@ function start(): void {
   const server: Server = startServerListen();
   const httpTerminator = createHttpTerminator({ server });
   shutdownHandler()
-    // .log('SIGINT signal received; closing HTTP server')
     .log('SIGINT signal received; shutting down')
     .thenDo(httpTerminator.terminate)
-    // .thenLog('HTTP server closed; shutting down scheduler')
     .thenDo(schedule.gracefulShutdown)
-    // .thenLog('Scheduler shut down, shutting down database client')
     .thenDo(shutdownClient)
-    // .thenLog('Database client shut down; exiting')
     .thenLog('Shutdown complete')
     .thenExit();
 }

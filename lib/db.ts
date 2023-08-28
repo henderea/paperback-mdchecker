@@ -1,6 +1,10 @@
+import type { QueryResult, QueryResultRow } from 'pg';
+
 import './env';
 
-import { Client, QueryResult, QueryResultRow } from 'pg';
+import { ensureInt } from './utils';
+
+import { Client } from 'pg';
 
 const client = new Client();
 
@@ -40,7 +44,7 @@ export async function getRecentCheckCount(userId: string, minCheck: number): Pro
   if(result.rowCount <= 0) {
     return 0;
   }
-  return parseInt(String(result.rows[0].count));
+  return ensureInt(result.rows[0].count);
 }
 
 export async function getLastCheck(userId: string, mangaId: string): Promise<number> {
@@ -48,7 +52,7 @@ export async function getLastCheck(userId: string, mangaId: string): Promise<num
   if(result.rowCount <= 0) {
     return -1;
   }
-  return parseInt(String(result.rows[0].last_check));
+  return ensureInt(result.rows[0].last_check);
 }
 
 export async function getLastUserCheck(userId: string): Promise<number> {
@@ -56,7 +60,7 @@ export async function getLastUserCheck(userId: string): Promise<number> {
   if(result.rowCount <= 0) {
     return -1;
   }
-  return parseInt(String(result.rows[0].latest_check));
+  return ensureInt(result.rows[0].latest_check);
 }
 
 export async function getUserUpdateCount(userId: string, latestCheck: number): Promise<number> {
@@ -64,7 +68,7 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
   if(result.rowCount <= 0) {
     return -1;
   }
-  return parseInt(String(result.rows[0].count));
+  return ensureInt(result.rows[0].count);
 }
 
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
@@ -72,7 +76,7 @@ export async function getLastUpdate(userId: string, mangaId: string): Promise<nu
   if(result.rowCount <= 0) {
     return -1;
   }
-  return parseInt(String(result.rows[0].last_update));
+  return ensureInt(result.rows[0].last_update);
 }
 
 export async function insertMangaRecord(userId: string, mangaId: string, epoch: number): Promise<void> {
@@ -96,7 +100,7 @@ export async function getLatestUpdate(): Promise<number> {
   if(result.rowCount <= 0) {
     return -1;
   }
-  return parseInt(String(result.rows[0].latest_update));
+  return ensureInt(result.rows[0].latest_update);
 }
 
 export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {

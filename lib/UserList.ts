@@ -6,15 +6,18 @@ export type Role = typeof roles[number];
 export class User {
   private readonly _userId: string;
   private readonly _roles: Role[];
+  private readonly _isAdmin: boolean;
 
   constructor(row: UserResult) {
     this._userId = row.user_id;
     this._roles = `${row.roles}`.split(/,/g).map((s) => s.trim()) as Role[];
+    this._isAdmin = this.hasAnyRole('ADMIN');
   }
 
   get userId(): string { return this._userId; }
   get roles(): Role[] { return this._roles; }
   hasAnyRole(...roles: Role[]) { return this.roles.some((r) => roles.includes(r)); }
+  get isAdmin(): boolean { return this._isAdmin; }
 }
 
 function processUsers(data: UserResult[]): Dictionary<User> {
