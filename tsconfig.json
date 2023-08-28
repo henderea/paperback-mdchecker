@@ -32,6 +32,7 @@
     "resolveJsonModule": true
   },
   "include": [
+    "bin/**/*.ts",
     "src/**/*.ts",
     "lib/**/*.ts",
     "ts-types/**/*.ts"

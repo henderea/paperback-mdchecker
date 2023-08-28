@@ -9,11 +9,11 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "start": "ts-node ./src/index.ts",
+    "start": "ts-node ./bin/index.ts",
     "clean": "rm -rf build",
     "build": "yarn clean && yarn build:app && yarn build:update-check",
-    "build:app": "ncc build src/app.ts -m -q -o build/app -e dotenv -e express -e got -e http-terminator -e node-schedule -e pg",
-    "build:update-check": "ncc build src/update-check.ts -m -q -o build/update-check -e dotenv -e express -e got -e http-terminator -e node-schedule -e pg"
+    "build:app": "./scripts/ncc-build-release.sh app",
+    "build:update-check": "./scripts/ncc-build-release.sh update-check"
   },
   "dependencies": {
     "dotenv": "^16.0.3",
