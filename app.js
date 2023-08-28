@@ -10,7 +10,7 @@ const { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, ge
 
 const { shutdownHandler } = require('./lib/ShutdownHandler');
 
-const { UserList } = require('./lib/UserList');
+const { UserList, Role } = require('./lib/UserList');
 
 const { Duration, formatDate, formatDuration } = require('./lib/utils');
 
@@ -24,6 +24,10 @@ users.update();
 
 function checkUser(userId) {
   return users.hasUser(userId);
+}
+
+function getUser(userId) {
+  return users.getUser(userId);
 }
 
 // unknown | updated | current | no-user | error
@@ -104,7 +108,8 @@ app.get('/last-update-check', async (req, res) => {
   const pjson = prettyJsonResponse(res);
   try {
     const userId = req.query.userId;
-    if(!checkUser(userId)) {
+    const user = getUser(userId);
+    if(!user) {
       pjson({ state: 'no-user' });
       return;
     }
@@ -133,7 +138,7 @@ app.get('/last-update-check', async (req, res) => {
     }
     const end = parseInt(String(lastCheck.check_end_time));
     const endTime = new Date(end);
-    const count = lastCheck.update_count;
+    const count = user.hasAnyRole(Role.ADMIN) ? lastCheck.update_count : undefined;
     pjson({
       state: count < 0 ? 'no-series' : 'completed',
       start: formatDate(startTime),
