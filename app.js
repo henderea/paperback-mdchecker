@@ -76,6 +76,23 @@ app.get('/manga-check', async (req, res) => {
   }
 });
 
+/**
+ * query: userId
+ *
+ * returns pretty JSON with one of:
+ *  - { state: "error" }
+ *  - { state: "no-user" }
+ *  - { state: "unknown" }
+ *  - { state: "running", start: <time string> }
+ *  - { state: "no-series", start: <time string>, end: <time string>, duration: <formatted duration string>, count: -1 }
+ *  - { state: "completed", start: <time string>, end: <time string>, duration: <formatted duration string>, count: <number> }
+ *
+ * With everything other than "error" and "no-user" potentially also having these additional fields related to the provided userId:
+ *  - lastUserFetch: <time string>
+ *  - updatesSinceLastFetch: <number>
+ *
+ * Note that "no-series" is for when there were no series to check because nothing has been fetched in the past week.
+ */
 function prettyJsonResponse(res) {
   return (data) => {
     res.header('Content-Type','application/json');
