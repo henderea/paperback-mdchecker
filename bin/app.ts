@@ -91,11 +91,26 @@ app.get('/manga-check', async (req: Request, res: Response) => {
   }
 });
 
+type UpdateCheckState = 'no-user' | 'unknown' | 'running' | 'failed' | 'no-series' | 'unknown-result' | 'completed' | 'error';
+
 function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   return (data: Dictionary<any>) => {
     res.header('Content-Type','application/json');
     res.send(JSON.stringify(data, null, 2));
   };
+}
+
+function getUpdateCheckStateFromCount(count: number): UpdateCheckState {
+  if(count == -2) {
+    return 'failed';
+  }
+  if(count == -1) {
+    return 'no-series';
+  }
+  if(count < 0) {
+    return 'unknown-result';
+  }
+  return 'completed';
 }
 
 /**
@@ -104,13 +119,15 @@ function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
  * returns pretty JSON with one of:
  *  - { state: "error" | "no-user" | "unknown" }
  *  - { state: "running", start: <time string> }
- *  - { state: "no-series" | "completed", start: <time string>, end: <time string>, duration: <formatted duration string>, count: <number> }
+ *  - { state: "no-series" | "completed" | "failed" | "unknown-result", start: <time string>, end: <time string>, duration: <formatted duration string>, count: <number> }
  *
  * Everything other than "error" and "no-user" potentially also has these additional fields related to the provided userId:
  *  - lastUserFetch: <time string>
  *  - updatesSinceLastFetch: <number>
  *
- * Note that "no-series" is for when there were no series to check because nothing has been fetched in the past week.
+ * "no-series" - when there were no series to check because nothing has been fetched in the past week.
+ * "failed" - when the update check process failed
+ * "unknown-result" - when the update check process ended with an unknown non-success response
  */
 app.get('/last-update-check', async (req: Request, res: Response) => {
   const pjson = prettyJsonResponse(res);
@@ -147,7 +164,7 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
     const duration: string = formatDuration(endEpoch - startEpoch);
     const updateCount: number = lastCheck.update_count;
     const count: number | undefined = user.isAdmin ? updateCount : undefined;
-    const state: string = updateCount < 0 ? 'no-series' : 'completed';
+    const state: UpdateCheckState = getUpdateCheckStateFromCount(updateCount);
     pjson({
       state,
       start,

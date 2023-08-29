@@ -37,3 +37,20 @@ export function formatDuration(d: number): string {
 export function ensureInt(v: number | string | any): number {
   return parseInt(String(v));
 }
+
+export async function catchError<T, F = undefined>(p: Promise<T>, message: string, fallback: F): Promise<T | F> {
+  try {
+    return await p;
+  } catch (e) {
+    console.error(message, e);
+    return fallback;
+  }
+}
+
+export async function catchVoidError(p: Promise<void>, message: string): Promise<void> {
+  try {
+    await p;
+  } catch (e) {
+    console.error(message, e);
+  }
+}

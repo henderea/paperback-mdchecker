@@ -9,7 +9,7 @@ import { URLBuilder } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration } from 'lib/utils';
+import { Duration, catchVoidError } from 'lib/utils';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
 const MANGADEX_API: string = 'https://api.mangadex.org';
@@ -81,8 +81,8 @@ async function determineLatestUpdate(epoch: number): Promise<number> {
 }
 
 async function queryUpdates(): Promise<void> {
+  const epoch: number = Date.now();
   try {
-    const epoch: number = Date.now();
     await addUpdateCheck(epoch);
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
@@ -99,6 +99,7 @@ async function queryUpdates(): Promise<void> {
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
   } catch (e) {
     console.error('Encountered error fetching updates', e);
+    catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2), 'Encountered error updating update check result');
   }
 }
 
