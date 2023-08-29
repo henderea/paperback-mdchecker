@@ -91,7 +91,23 @@ app.get('/manga-check', async (req: Request, res: Response) => {
   }
 });
 
-type UpdateCheckState = 'no-user' | 'unknown' | 'running' | 'failed' | 'no-series' | 'unknown-result' | 'completed' | 'error';
+/**
+ * when the update check process failed
+ */
+type UpdateCheckStateFailed = 'failed';
+
+/**
+ * when there were no series to check because nothing has been fetched in the past week.
+ */
+type UpdateCheckStateNoSeries = 'no-series';
+
+/**
+ * when the update check process ended with an unknown non-success response
+ */
+type UpdateCheckStateUnknownResult = 'unknown-result';
+
+type EndedUpdateCheckState = 'completed' | UpdateCheckStateFailed | UpdateCheckStateNoSeries | UpdateCheckStateUnknownResult;
+type UpdateCheckState = 'no-user' | 'unknown' | 'error' | 'running' | EndedUpdateCheckState;
 
 function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   return (data: Dictionary<any>) => {
@@ -100,7 +116,7 @@ function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   };
 }
 
-function getUpdateCheckStateFromCount(count: number): UpdateCheckState {
+function getUpdateCheckStateFromCount(count: number): EndedUpdateCheckState {
   if(count == -2) {
     return 'failed';
   }
@@ -112,6 +128,33 @@ function getUpdateCheckStateFromCount(count: number): UpdateCheckState {
   }
   return 'completed';
 }
+
+/**
+ * A US-formatted date/time string in Eastern Time
+ */
+type TimeString = string;
+/**
+ * A formatted duration string with ms, s, m, and h (leaving a unit out if it would be 0)
+ */
+type DurationString = string;
+
+type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: number };
+
+type UpdateNoUser = { state: 'no-user' };
+type UpdateError = { state: 'error' };
+
+type UpdateUnknownBase = { state: 'unknown' };
+type UpdateUnknown = UpdateUnknownBase | (UpdateUnknownBase & UserUpdateData);
+
+type UpdateRunningBase = { state: 'running', start: TimeString };
+type UpdateRunning = UpdateRunningBase | (UpdateRunningBase & UserUpdateData);
+
+type UpdateEndedBase = { state: EndedUpdateCheckState, start: TimeString, end: TimeString, duration: DurationString, count?: number };
+type UpdateEnded = UpdateEndedBase | (UpdateEndedBase & UserUpdateData);
+
+type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | UpdateEnded;
+
+
 
 /**
  * query: userId
@@ -130,7 +173,7 @@ function getUpdateCheckStateFromCount(count: number): UpdateCheckState {
  * "unknown-result" - when the update check process ended with an unknown non-success response
  */
 app.get('/last-update-check', async (req: Request, res: Response) => {
-  const pjson = prettyJsonResponse(res);
+  const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
   try {
     const userId: string | undefined = req.query.userId as string | undefined;
     const user = getUser(userId);
@@ -138,11 +181,12 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
       pjson({ state: 'no-user' });
       return;
     }
-    const userData: { lastUserFetch?: string, updatesSinceLastFetch?: number } = {};
+    let userData: UserUpdateData | EmptyObject = {};
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
-      userData.lastUserFetch = formatEpoch(lastUserCheck);
-      userData.updatesSinceLastFetch = await getUserUpdateCount(userId, lastUserCheck - Duration.HOURS(6));
+      const lastUserFetch: TimeString = formatEpoch(lastUserCheck);
+      const updatesSinceLastFetch: number = await getUserUpdateCount(userId, lastUserCheck - Duration.HOURS(6));
+      userData = { lastUserFetch, updatesSinceLastFetch };
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();
     if(!lastCheck) {
@@ -150,7 +194,7 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
       return;
     }
     const startEpoch: number = ensureInt(lastCheck.check_start_time);
-    const start: string = formatEpoch(startEpoch);
+    const start: TimeString = formatEpoch(startEpoch);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
       pjson({
         state: 'running',
@@ -160,8 +204,8 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
       return;
     }
     const endEpoch: number = ensureInt(lastCheck.check_end_time);
-    const end: string = formatEpoch(endEpoch);
-    const duration: string = formatDuration(endEpoch - startEpoch);
+    const end: TimeString = formatEpoch(endEpoch);
+    const duration: DurationString = formatDuration(endEpoch - startEpoch);
     const updateCount: number = lastCheck.update_count;
     const count: number | undefined = user.isAdmin ? updateCount : undefined;
     const state: UpdateCheckState = getUpdateCheckStateFromCount(updateCount);
