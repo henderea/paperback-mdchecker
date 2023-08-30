@@ -2,7 +2,7 @@ import type { Server } from 'http';
 import type { Application, Request, Response } from 'express';
 
 import type { User } from 'lib/UserList';
-import type { UpdateCheckResult } from 'lib/db';
+import type { UpdateCheckResult, MangaInfo } from 'lib/db';
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
@@ -142,7 +142,7 @@ type TimeString = string;
  */
 type DurationString = string;
 
-type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: string[] };
+type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: MangaInfo[] };
 
 type UpdateNoUser = { state: 'no-user' };
 type UpdateError = { state: 'error' };
@@ -186,7 +186,7 @@ async function getUserUpdateData(userId: string | undefined): Promise<UpdateData
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
       const lastUserFetch: TimeString = formatEpoch(lastUserCheck);
-      const updatesSinceLastFetch: string[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
+      const updatesSinceLastFetch: MangaInfo[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
       userData = { lastUserFetch, updatesSinceLastFetch };
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();
@@ -231,7 +231,7 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
 
 function mapForJson(data: UpdateData): Dictionary<any> {
   if('updatesSinceLastFetch' in data) {
-    const value: string[] = data.updatesSinceLastFetch;
+    const value: MangaInfo[] = data.updatesSinceLastFetch;
     return { ...data, updatesSinceLastFetch: Array.isArray(value) ? value.length : 0 };
   }
   return data;

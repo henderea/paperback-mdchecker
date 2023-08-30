@@ -9,6 +9,7 @@ create table user_manga (
   manga_id text not null,
   last_check bigint,
   last_update bigint,
+  manga_title text,
   constraint pk_user_manga primary key (user_id, manga_id),
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );

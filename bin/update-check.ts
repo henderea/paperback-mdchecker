@@ -1,7 +1,10 @@
+import type { MangaInfo } from 'lib/db';
+
 import { updateSchedule, noStartStopLogs } from 'lib/env';
 
 import schedule from 'node-schedule';
 import got from 'got';
+import entities = require('entities');
 
 import { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck } from 'lib/db';
 
@@ -80,6 +83,53 @@ async function determineLatestUpdate(epoch: number): Promise<number> {
   return latestUpdate - Duration.MINUTE;
 }
 
+function decodeHTMLEntity(str: string | undefined): string | undefined {
+  if(str == undefined) {
+    return undefined;
+  }
+  return entities.decodeHTML(str);
+}
+
+async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
+  try {
+    if(mangaIds.length > PAGE_SIZE) {
+      return mangaIds.map((id) => ({ id, title: null }));
+    }
+    const url: string = new URLBuilder(MANGADEX_API)
+      .addPathComponent('manga')
+      .addQueryParameter('limit', PAGE_SIZE)
+      .addQueryParameter('ids', mangaIds)
+      .buildUrl();
+
+    const response = await got(url, {
+      headers: {
+        referer: `${MANGADEX_DOMAIN}/`
+      }
+    });
+
+    const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+
+    if(json.data === undefined) {
+      // Log this, no need to throw.
+      console.log(`Failed to parse JSON results for getMangaInfo`);
+      return mangaIds.map((id) => ({ id, title: null }));
+    }
+
+    const rv: MangaInfo[] = [];
+
+    for(const manga of json.data) {
+      const id = manga.id;
+      const mangaDetails = manga.attributes;
+      const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
+      rv.push({ id, title });
+    }
+    return rv;
+  } catch (e) {
+    console.error('Encountered error during getMangaInfo', e);
+    return mangaIds.map((id) => ({ id, title: null }));
+  }
+}
+
 async function queryUpdates(): Promise<void> {
   const epoch: number = Date.now();
   try {
@@ -95,7 +145,7 @@ async function queryUpdates(): Promise<void> {
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
-    await updateMangaRecordsForQuery(updatedManga, epoch);
+    await updateMangaRecordsForQuery(await getMangaInfo(updatedManga), epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
   } catch (e) {
     console.error('Encountered error fetching updates', e);

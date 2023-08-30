@@ -71,12 +71,12 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
   return ensureInt(result.rows[0].count);
 }
 
-export async function getUserUpdates(userId: string, latestCheck: number): Promise<string[]> {
-  const result: QueryResult<[string]> = await query('select manga_id as count from user_manga where user_id = $1 and last_check > $2 and last_update > last_check', [userId, latestCheck], 'array');
+export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaInfo[]> {
+  const result: QueryResult<[string, string | null]> = await query('select manga_id, manga_title from user_manga where user_id = $1 and last_check > $2 and last_update > last_check', [userId, latestCheck], 'array');
   if(result.rowCount <= 0) {
     return [];
   }
-  return result.rows.map((r) => r[0]);
+  return result.rows.map(([id, title]) => ({ id, title: title ?? null }));
 }
 
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
@@ -111,8 +111,20 @@ export async function getLatestUpdate(): Promise<number> {
   return ensureInt(result.rows[0].latest_update);
 }
 
-export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {
-  await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
+export interface MangaInfo {
+  id: string;
+  title: string | null;
+}
+
+export async function updateMangaRecordsForQuery(mangas: MangaInfo[], epoch: number): Promise<void> {
+  for(let i = 0; i < mangas.length; i++) {
+    const manga: MangaInfo = mangas[i];
+    if(manga.title) {
+      await query('update user_manga set last_update = $2, manga_title = $3 where manga_id = $1', [manga.id, epoch, manga.title]);
+    } else {
+      await query('update user_manga set last_update = $2 where manga_id = $1', [manga.id, epoch]);
+    }
+  }
 }
 
 export async function addUpdateCheck(epoch: number): Promise<void> {
