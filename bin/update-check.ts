@@ -6,7 +6,7 @@ import schedule from 'node-schedule';
 import got from 'got';
 import entities = require('entities');
 
-import { shutdownClient, getMangaIdsForQuery, getAllMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -157,11 +157,11 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
 async function queryTitles(): Promise<void> {
   const start: number = Date.now();
   try {
-    const mangaIds: string[] | null = await getAllMangaIds();
+    const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE);
     if(mangaIds) {
       const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
       if(mangas && mangas.length > 0) {
-        await updateMangaTitles(mangas);
+        await updateMangaTitles(mangas, start);
       }
       console.log(`Finished title update in ${formatDuration(Date.now() - start)}`);
     }

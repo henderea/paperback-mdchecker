@@ -103,8 +103,8 @@ export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | 
   return result.rows.map((r) => r[0]);
 }
 
-export async function getAllMangaIds(): Promise<string[] | null> {
-  const result: QueryResult<[string]> = await query('select distinct manga_id from user_manga', [], 'array');
+export async function getTitleCheckMangaIds(limit: number): Promise<string[] | null> {
+  const result: QueryResult<[string]> = await query('with mangas as (select manga_id from user_manga order by last_title_check asc, last_check desc, last_update desc limit $1) select distinct manga_id from mangas', [limit], 'array');
   if(result.rowCount <= 0) {
     return null;
   }
@@ -128,11 +128,11 @@ export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: numb
   await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
 }
 
-export async function updateMangaTitles(mangas: MangaInfo[]): Promise<void> {
+export async function updateMangaTitles(mangas: MangaInfo[], epoch: number): Promise<void> {
   for(let i = 0; i < mangas.length; i++) {
     const manga: MangaInfo = mangas[i];
     if(manga.title) {
-      await query('update user_manga set manga_title = $2 where manga_id = $1', [manga.id, manga.title]);
+      await query('update user_manga set manga_title = $2, last_title_check = $3 where manga_id = $1', [manga.id, manga.title, epoch]);
     }
   }
 }
