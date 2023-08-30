@@ -24,6 +24,8 @@ const app: Application = express();
 
 app.set('view engine', 'ejs');
 
+app.use(express.static('public', { index: false }));
+
 const users: UserList = new UserList();
 
 schedule.scheduleJob(userUpdateSchedule, () => users.update());

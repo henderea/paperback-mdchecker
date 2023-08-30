@@ -1,20 +1,7 @@
 <html>
   <head>
     <title>Update Check</title>
-    <style>
-      .mainTable {
-        border-collapse: collapse;
-        border-spacing: 0;
-      }
-      .mainTable tbody th, .mainTable tbody td {
-        text-align: left;
-        font-size: 1.8em;
-        border: 1px solid #999;
-        padding: 5px;
-        border-collapse: collapse;
-        border-spacing: 0;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/update-check.css"/>
   </head>
   <body>
     <table class="mainTable">
@@ -59,7 +46,7 @@
             <td>
               <b>Count:</b> <%= updatesSinceLastFetch.length %><br>
               <% if(updatesSinceLastFetch.length > 0) { %>
-              <ul><% updatesSinceLastFetch.forEach((m) => { %><li><a href="https://mangadex.org/title/<%= m %>" target="_blank" style="color: blue;"><%= m %></a></li><% }); %></ul>
+              <ul><% updatesSinceLastFetch.forEach((m) => { %><li><a href="https://mangadex.org/title/<%= m %>" target="_blank"><%= m %></a></li><% }); %></ul>
               <% } %>
             </td>
           </tr>
