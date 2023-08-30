@@ -114,38 +114,36 @@ async function queryUpdates(): Promise<void> {
 }
 
 async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
+  if(mangaIds.length > PAGE_SIZE) {
+    mangaIds = mangaIds.slice(0, PAGE_SIZE);
+  }
   try {
-    const offset: number = 0;
-    const loadNextPage: boolean = true;
     const mangas: MangaInfo[] = [];
-    while(loadNextPage) {
-      const url: string = new URLBuilder(MANGADEX_API)
-        .addPathComponent('manga')
-        .addQueryParameter('limit', PAGE_SIZE)
-        .addQueryParameter('offset', offset)
-        .addQueryParameter('ids', mangaIds)
-        .buildUrl();
+    const url: string = new URLBuilder(MANGADEX_API)
+      .addPathComponent('manga')
+      .addQueryParameter('limit', PAGE_SIZE)
+      .addQueryParameter('ids', mangaIds)
+      .buildUrl();
 
-      const response = await got(url, {
-        headers: {
-          referer: `${MANGADEX_DOMAIN}/`
-        }
-      });
-
-      const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
-
-      if(json.data === undefined) {
-        // Log this, no need to throw.
-        console.log(`Failed to parse JSON results for getMangaInfo`);
-        return mangas;
+    const response = await got(url, {
+      headers: {
+        referer: `${MANGADEX_DOMAIN}/`
       }
+    });
 
-      for(const manga of json.data) {
-        const id = manga.id;
-        const mangaDetails = manga.attributes;
-        const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-        mangas.push({ id, title });
-      }
+    const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+
+    if(json.data === undefined) {
+      // Log this, no need to throw.
+      console.log(`Failed to parse JSON results for getMangaInfo`);
+      return mangas;
+    }
+
+    for(const manga of json.data) {
+      const id = manga.id;
+      const mangaDetails = manga.attributes;
+      const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
+      mangas.push({ id, title });
     }
     return mangas;
   } catch (e) {
