@@ -44,11 +44,11 @@ body, html {
   }
 
   &.unknown, &.unknown-result {
-    color: #999;
+    color: #888;
   }
 
   &.no-series {
-    color: yellow;
+    color: gold;
   }
 }
 
@@ -67,6 +67,12 @@ body, html {
           color: orange;
         }
       }
+    }
+  }
+
+  .state {
+    &.unknown, &.unknown-result {
+      color: #ccc;
     }
   }
 }
