@@ -163,7 +163,7 @@ async function queryTitles(): Promise<void> {
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
       }
-      console.log(`Finished title update in ${formatDuration(Date.now() - start)}`);
+      console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
     }
     console.log('No titles found to update');
   } catch (e) {
