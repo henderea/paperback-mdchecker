@@ -19,7 +19,7 @@ create index ix_user_manga_manga_id_last_check on user_manga (manga_id, last_che
 create index ix_user_manga_user_id_manga_id_last_update_last_check on user_manga (user_id, manga_id, last_update, last_check);
 create index ix_user_manga_user_id_last_check_last_update on user_manga (user_id, last_check, last_update);
 create index ix_user_manga_last_update_last_check on user_manga (last_update, last_check);
-create index ix_user_manga_last_title_check_last_check_last_update_manga_id on user_manga (last_title_check, last_check, last_update, manga_id);
+create index ix_user_manga_last_title_check_last_update_last_check_manga_id on user_manga (last_title_check, last_update, last_check, manga_id);
 
 create table update_check (
   check_start_time bigint not null,
