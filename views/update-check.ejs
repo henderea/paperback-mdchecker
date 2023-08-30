@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>Update Check</title>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <th>State</th>
+          <td><%= state %></td>
+        </tr>
+        <% if(start) { %>
+          <tr>
+            <th>Start</th>
+            <td><%= start %></td>
+          </tr>
+        <% } %>
+        <% if(end) { %>
+          <tr>
+            <th>End</th>
+            <td><%= end %></td>
+          </tr>
+        <% } %>
+        <% if(duration) { %>
+          <tr>
+            <th>Duration</th>
+            <td><%= duration %></td>
+          </tr>
+        <% } %>
+        <% if(count || count === 0) { %>
+          <tr>
+            <th>Count</th>
+            <td><%= count %></td>
+          </tr>
+        <% } %>
+        <% if(lastUserFetch) { %>
+          <tr>
+            <th>Last User Fetch</th>
+            <td><%= lastUserFetch %></td>
+          </tr>
+        <% } %>
+        <% if(updatesSinceLastFetch && Array.isArray(updatesSinceLastFetch)) { %>
+          <tr>
+            <th>Updates Since Last Fetch:</th>
+            <td>
+              <b>Count:</b> <%= updatesSinceLastFetch.length %><br>
+              <% if(updatesSinceLastFetch.length > 0) { %>
+              <ul><% updatesSinceLastFetch.forEach((m) => { %><li><a href="https://mangadex.org/title/<%= m %>" target="_blank" style="color: blue;"><%= m %></a></li><% }); %></ul>
+              <% } %>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </body>
+</html>

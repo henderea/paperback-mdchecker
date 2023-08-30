@@ -12,7 +12,7 @@ import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdateCount, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -21,6 +21,8 @@ import { UserList } from 'lib/UserList';
 import { Duration, formatEpoch, formatDuration, ensureInt } from 'lib/utils';
 
 const app: Application = express();
+
+app.set('view engine', 'ejs');
 
 const users: UserList = new UserList();
 
@@ -138,7 +140,7 @@ type TimeString = string;
  */
 type DurationString = string;
 
-type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: number };
+type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: string[] };
 
 type UpdateNoUser = { state: 'no-user' };
 type UpdateError = { state: 'error' };
@@ -172,36 +174,31 @@ type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | U
  * "failed" - when the update check process failed
  * "unknown-result" - when the update check process ended with an unknown non-success response
  */
-app.get('/last-update-check', async (req: Request, res: Response) => {
-  const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
+async function getUserUpdateData(userId: string | undefined): Promise<UpdateData> {
   try {
-    const userId: string | undefined = req.query.userId as string | undefined;
     const user = getUser(userId);
     if(!userId || !user) {
-      pjson({ state: 'no-user' });
-      return;
+      return { state: 'no-user' };
     }
     let userData: UserUpdateData | EmptyObject = {};
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
       const lastUserFetch: TimeString = formatEpoch(lastUserCheck);
-      const updatesSinceLastFetch: number = await getUserUpdateCount(userId, lastUserCheck - Duration.HOURS(6));
+      const updatesSinceLastFetch: string[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
       userData = { lastUserFetch, updatesSinceLastFetch };
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();
     if(!lastCheck) {
-      pjson({ state: 'unknown', ...userData });
-      return;
+      return { state: 'unknown', ...userData };
     }
     const startEpoch: number = ensureInt(lastCheck.check_start_time);
     const start: TimeString = formatEpoch(startEpoch);
     if(!lastCheck.check_end_time || lastCheck.check_end_time <= 0) {
-      pjson({
+      return {
         state: 'running',
         start,
         ...userData
-      });
-      return;
+      };
     }
     const endEpoch: number = ensureInt(lastCheck.check_end_time);
     const end: TimeString = formatEpoch(endEpoch);
@@ -209,18 +206,39 @@ app.get('/last-update-check', async (req: Request, res: Response) => {
     const updateCount: number = lastCheck.update_count;
     const count: number | undefined = user.isAdmin ? updateCount : undefined;
     const state: UpdateCheckState = getUpdateCheckStateFromCount(updateCount);
-    pjson({
+    return {
       state,
       start,
       end,
       duration,
       count,
       ...userData
-    });
+    };
   } catch (e) {
     console.error('Encountered error in last-update-check request handler', e);
-    pjson({ state: 'error' });
+    return { state: 'error' };
   }
+}
+
+app.get('/last-update-check', async (req: Request, res: Response) => {
+  // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
+  const render = (data: UpdateData) => { res.render('update-check', data); };
+  const userId: string | undefined = req.query.userId as string | undefined;
+  render(await getUserUpdateData(userId));
+});
+
+function mapForJson(data: UpdateData): Dictionary<any> {
+  if('updatesSinceLastFetch' in data) {
+    const value: string[] = data.updatesSinceLastFetch;
+    return { ...data, updatesSinceLastFetch: Array.isArray(value) ? value.length : 0 };
+  }
+  return data;
+}
+
+app.get('/last-update-check.json', async (req: Request, res: Response) => {
+  const pjson = prettyJsonResponse(res);
+  const userId: string | undefined = req.query.userId as string | undefined;
+  pjson(mapForJson(await getUserUpdateData(userId)));
 });
 
 function startServerListen(): Server {

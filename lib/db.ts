@@ -71,6 +71,14 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
   return ensureInt(result.rows[0].count);
 }
 
+export async function getUserUpdates(userId: string, latestCheck: number): Promise<string[]> {
+  const result: QueryResult<[string]> = await query('select manga_id as count from user_manga where user_id = $1 and last_check > $2 and last_update > last_check', [userId, latestCheck], 'array');
+  if(result.rowCount <= 0) {
+    return [];
+  }
+  return result.rows.map((r) => r[0]);
+}
+
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
   const result: QueryResult<{ last_update: number }> = await query('select last_update from user_manga where user_id = $1 and manga_id = $2', [userId, mangaId]);
   if(result.rowCount <= 0) {
