@@ -160,10 +160,13 @@ async function queryTitles(): Promise<void> {
       const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
+        console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+      } else {
+        console.log(`No titles were able to be fetched after ${formatDuration(Date.now() - start)}`);
       }
-      console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+    } else {
+      console.log(`No titles found to update after ${formatDuration(Date.now() - start)}`);
     }
-    console.log('No titles found to update');
   } catch (e) {
     console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - start)}`, e);
   }
