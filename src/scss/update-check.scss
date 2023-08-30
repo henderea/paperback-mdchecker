@@ -30,6 +30,28 @@ body, html {
   }
 }
 
+.state {
+  &.no-user, &.error, &.failed {
+    color: red;
+  }
+
+  &.completed {
+    color: green;
+  }
+
+  &.running {
+    color: blue;
+  }
+
+  &.unknown, &.unknown-result {
+    color: #999;
+  }
+
+  &.no-series {
+    color: yellow;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   body, html {
     background-color: #181A1F;
