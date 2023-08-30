@@ -155,7 +155,7 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
 async function queryTitles(): Promise<void> {
   const start: number = Date.now();
   try {
-    const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE);
+    const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, start - Duration.DAYS(2));
     if(mangaIds) {
       const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
       if(mangas && mangas.length > 0) {

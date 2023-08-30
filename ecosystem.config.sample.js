@@ -19,7 +19,7 @@ module.exports = {
       // 'EXPRESS_HOST': 'localhost',
       // 'EXPRESS_SOCKET_PATH': '/tmp/paperback-mdchecker.sock',
       'UPDATE_SCHEDULE': '*/20 * * * *',
-      'TITLE_UPDATE_SCHEDULE': '10 */3 * * *',
+      'TITLE_UPDATE_SCHEDULE': '30 * * * *',
       'USER_UPDATE_SCHEDULE': '*/20 * * * *',
       'NO_START_STOP_LOGS': true
     }
@@ -39,7 +39,7 @@ module.exports = {
       // 'EXPRESS_HOST': 'localhost',
       // 'EXPRESS_SOCKET_PATH': '/tmp/paperback-mdchecker.sock',
       'UPDATE_SCHEDULE': '*/20 * * * *',
-      'TITLE_UPDATE_SCHEDULE': '10 */3 * * *',
+      'TITLE_UPDATE_SCHEDULE': '30 * * * *',
       'USER_UPDATE_SCHEDULE': '*/20 * * * *',
       'NO_START_STOP_LOGS': true
     }
