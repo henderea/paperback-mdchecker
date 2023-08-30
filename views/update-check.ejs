@@ -8,45 +8,45 @@
       <tbody>
         <tr>
           <th>State</th>
-          <td class="state <%= state %>"><%= state %></td>
+          <td class="state <%= data.state %>"><%= data.state %></td>
         </tr>
-        <% if(start) { %>
+        <% if(data.start) { %>
           <tr>
             <th>Start</th>
-            <td><%= start %></td>
+            <td><%= data.start %></td>
           </tr>
         <% } %>
-        <% if(end) { %>
+        <% if(data.end) { %>
           <tr>
             <th>End</th>
-            <td><%= end %></td>
+            <td><%= data.end %></td>
           </tr>
         <% } %>
-        <% if(duration) { %>
+        <% if(data.duration) { %>
           <tr>
             <th>Duration</th>
-            <td><%= duration %></td>
+            <td><%= data.duration %></td>
           </tr>
         <% } %>
-        <% if(count || count === 0) { %>
+        <% if(data.count !== undefined) { %>
           <tr>
             <th>Count</th>
-            <td><%= count %></td>
+            <td><%= data.count %></td>
           </tr>
         <% } %>
-        <% if(lastUserFetch) { %>
+        <% if(data.lastUserFetch) { %>
           <tr>
             <th>Last User Fetch</th>
-            <td><%= lastUserFetch %></td>
+            <td><%= data.lastUserFetch %></td>
           </tr>
         <% } %>
-        <% if(updatesSinceLastFetch && Array.isArray(updatesSinceLastFetch)) { %>
+        <% if(data.updatesSinceLastFetch && Array.isArray(data.updatesSinceLastFetch)) { %>
           <tr>
             <th>Updates Since Last Fetch</th>
             <td>
-              <b>Count:</b> <%= updatesSinceLastFetch.length %><br>
-              <% if(updatesSinceLastFetch.length > 0) { %>
-              <ul><% updatesSinceLastFetch.forEach((m) => { %><li><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></li><% }); %></ul>
+              <b>Count:</b> <%= data.updatesSinceLastFetch.length %><br>
+              <% if(data.updatesSinceLastFetch.length > 0) { %>
+              <ul><% data.updatesSinceLastFetch.forEach((m) => { %><li><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></li><% }); %></ul>
               <% } %>
             </td>
           </tr>

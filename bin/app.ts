@@ -224,7 +224,7 @@ async function getUserUpdateData(userId: string | undefined): Promise<UpdateData
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = (data: UpdateData) => { res.render('update-check', data); };
+  const render = (data: UpdateData) => { res.render('update-check', { data }); };
   const userId: string | undefined = req.query.userId as string | undefined;
   render(await getUserUpdateData(userId));
 });
