@@ -1,18 +1,18 @@
 import type { MangaInfo } from 'lib/db';
 
-import { updateSchedule, noStartStopLogs } from 'lib/env';
+import { updateSchedule, titleUpdateSchedule, noStartStopLogs } from 'lib/env';
 
 import schedule from 'node-schedule';
 import got from 'got';
 import entities = require('entities');
 
-import { shutdownClient, getMangaIdsForQuery, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getAllMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration, catchVoidError } from 'lib/utils';
+import { Duration, catchVoidError, formatDuration } from 'lib/utils';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
 const MANGADEX_API: string = 'https://api.mangadex.org';
@@ -90,46 +90,6 @@ function decodeHTMLEntity(str: string | undefined): string | undefined {
   return entities.decodeHTML(str);
 }
 
-async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
-  try {
-    if(mangaIds.length > PAGE_SIZE) {
-      return mangaIds.map((id) => ({ id, title: null }));
-    }
-    const url: string = new URLBuilder(MANGADEX_API)
-      .addPathComponent('manga')
-      .addQueryParameter('limit', PAGE_SIZE)
-      .addQueryParameter('ids', mangaIds)
-      .buildUrl();
-
-    const response = await got(url, {
-      headers: {
-        referer: `${MANGADEX_DOMAIN}/`
-      }
-    });
-
-    const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
-
-    if(json.data === undefined) {
-      // Log this, no need to throw.
-      console.log(`Failed to parse JSON results for getMangaInfo`);
-      return mangaIds.map((id) => ({ id, title: null }));
-    }
-
-    const rv: MangaInfo[] = [];
-
-    for(const manga of json.data) {
-      const id = manga.id;
-      const mangaDetails = manga.attributes;
-      const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-      rv.push({ id, title });
-    }
-    return rv;
-  } catch (e) {
-    console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null }));
-  }
-}
-
 async function queryUpdates(): Promise<void> {
   const epoch: number = Date.now();
   try {
@@ -145,7 +105,7 @@ async function queryUpdates(): Promise<void> {
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
-    await updateMangaRecordsForQuery(await getMangaInfo(updatedManga), epoch);
+    await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
   } catch (e) {
     console.error('Encountered error fetching updates', e);
@@ -153,7 +113,66 @@ async function queryUpdates(): Promise<void> {
   }
 }
 
+async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
+  try {
+    const offset: number = 0;
+    const loadNextPage: boolean = true;
+    const mangas: MangaInfo[] = [];
+    while(loadNextPage) {
+      const url: string = new URLBuilder(MANGADEX_API)
+        .addPathComponent('manga')
+        .addQueryParameter('limit', PAGE_SIZE)
+        .addQueryParameter('offset', offset)
+        .addQueryParameter('ids', mangaIds)
+        .buildUrl();
+
+      const response = await got(url, {
+        headers: {
+          referer: `${MANGADEX_DOMAIN}/`
+        }
+      });
+
+      const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+
+      if(json.data === undefined) {
+        // Log this, no need to throw.
+        console.log(`Failed to parse JSON results for getMangaInfo`);
+        return mangas;
+      }
+
+      for(const manga of json.data) {
+        const id = manga.id;
+        const mangaDetails = manga.attributes;
+        const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
+        mangas.push({ id, title });
+      }
+    }
+    return mangas;
+  } catch (e) {
+    console.error('Encountered error during getMangaInfo', e);
+    return mangaIds.map((id) => ({ id, title: null }));
+  }
+}
+
+async function queryTitles(): Promise<void> {
+  const start: number = Date.now();
+  try {
+    const mangaIds: string[] | null = await getAllMangaIds();
+    if(mangaIds) {
+      const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
+      if(mangas && mangas.length > 0) {
+        await updateMangaTitles(mangas);
+      }
+      console.log(`Finished title update in ${formatDuration(Date.now() - start)}`);
+    }
+    console.log('No titles found to update');
+  } catch (e) {
+    console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - start)}`, e);
+  }
+}
+
 schedule.scheduleJob(updateSchedule, queryUpdates);
+schedule.scheduleJob(titleUpdateSchedule, queryTitles);
 
 shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)

@@ -103,6 +103,14 @@ export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | 
   return result.rows.map((r) => r[0]);
 }
 
+export async function getAllMangaIds(): Promise<string[] | null> {
+  const result: QueryResult<[string]> = await query('select distinct manga_id from user_manga', [], 'array');
+  if(result.rowCount <= 0) {
+    return null;
+  }
+  return result.rows.map((r) => r[0]);
+}
+
 export async function getLatestUpdate(): Promise<number> {
   const result: QueryResult<{ latest_update: number }> = await query('select max(last_update) as latest_update from user_manga');
   if(result.rowCount <= 0) {
@@ -116,13 +124,15 @@ export interface MangaInfo {
   title: string | null;
 }
 
-export async function updateMangaRecordsForQuery(mangas: MangaInfo[], epoch: number): Promise<void> {
+export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {
+  await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
+}
+
+export async function updateMangaTitles(mangas: MangaInfo[]): Promise<void> {
   for(let i = 0; i < mangas.length; i++) {
     const manga: MangaInfo = mangas[i];
     if(manga.title) {
-      await query('update user_manga set last_update = $2, manga_title = $3 where manga_id = $1', [manga.id, epoch, manga.title]);
-    } else {
-      await query('update user_manga set last_update = $2 where manga_id = $1', [manga.id, epoch]);
+      await query('update user_manga set manga_title = $2 where manga_id = $1', [manga.id, manga.title]);
     }
   }
 }

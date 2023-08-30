@@ -38,5 +38,6 @@ export const expressPort: number | null = processPort(process.env.EXPRESS_PORT);
 export const expressHost: string | null = processString(process.env.EXPRESS_HOST);
 export const expressSocketPath: string | null = processString(process.env.EXPRESS_SOCKET_PATH);
 export const updateSchedule: string = processString(process.env.UPDATE_SCHEDULE) || '*/20 * * * *';
+export const titleUpdateSchedule: string = processString(process.env.TITLE_UPDATE_SCHEDULE) || '5 */6 * * *';
 export const userUpdateSchedule: string = processString(process.env.USER_UPDATE_SCHEDULE) || '*/20 * * * *';
 export const noStartStopLogs: boolean = processBoolean(process.env.NO_START_STOP_LOGS, false);
