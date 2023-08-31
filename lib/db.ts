@@ -72,7 +72,7 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
 }
 
 export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaInfo[]> {
-  const result: QueryResult<[string, string | null]> = await query('select manga_id, manga_title from user_manga where user_id = $1 and last_check > $2 and last_update > last_check', [userId, latestCheck], 'array');
+  const result: QueryResult<[string, string | null]> = await query('select manga_id, manga_title from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by manga_title, manga_id', [userId, latestCheck], 'array');
   if(result.rowCount <= 0) {
     return [];
   }
