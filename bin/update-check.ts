@@ -5,6 +5,8 @@ import { updateSchedule, titleUpdateSchedule, noStartStopLogs } from 'lib/env';
 import schedule from 'node-schedule';
 import got from 'got';
 import entities = require('entities');
+import _map from 'lodash/map.js';
+import _difference from 'lodash/difference.js';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles } from 'lib/db';
 
@@ -148,7 +150,7 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null }));
+    return _map(mangaIds, (id) => ({ id, title: null }));
   }
 }
 
@@ -156,13 +158,22 @@ async function queryTitles(): Promise<void> {
   const start: number = Date.now();
   try {
     const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, start - Duration.DAYS(2));
-    if(mangaIds) {
+    if(mangaIds && mangaIds.length > 0) {
       const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
         console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+        if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
+          const fetchedIds: string[] = _map(mangas, 'id');
+          const missingIds: string[] = _difference(mangaIds, fetchedIds);
+          const missingCount: number = missingIds.length;
+          if(missingCount > 0) {
+            console.log(`Failed title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
+          }
+        }
       } else {
         console.log(`No titles were able to be fetched after ${formatDuration(Date.now() - start)}`);
+        console.log(`Failed title update on ${mangaIds.length} title${mangaIds.length == 1 ? '' : 's'}:\n${mangaIds.join('\n')}`);
       }
     } else {
       // console.log(`No titles found to update after ${formatDuration(Date.now() - start)}`);
