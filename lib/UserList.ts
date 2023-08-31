@@ -1,4 +1,5 @@
-import { listUsers, UserResult } from './db';
+import type { UserResult } from './db';
+import { listUsers } from './db';
 
 export const roles = ['ADMIN'] as const;
 export type Role = typeof roles[number];

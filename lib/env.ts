@@ -1,9 +1,5 @@
 import { ensureInt } from './utils';
 
-// if(process.env.NODE_ENV != 'production') {
-//   require('dotenv').config();
-// }
-
 function processPort(raw: string | undefined): number | null {
   if(raw) {
     const port = ensureInt(raw);

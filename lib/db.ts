@@ -1,7 +1,5 @@
 import type { QueryResult, QueryResultRow } from 'pg';
 
-import './env';
-
 import { ensureInt } from './utils';
 
 import { Client } from 'pg';
