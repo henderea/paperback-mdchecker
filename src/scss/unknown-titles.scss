@@ -16,16 +16,16 @@ body, html {
       a {
         color: blue;
       }
+
+      &.error {
+        color: red;
+      }
+      
+      &.ok {
+        color: green;
+      }
     }
   }
-}
-
-.error {
-  color: red;
-}
-
-.no-unknown {
-  color: green;
 }
 
 @media (prefers-color-scheme: dark) {
