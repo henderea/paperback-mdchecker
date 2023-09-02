@@ -11,6 +11,9 @@ import schedule from 'node-schedule';
 import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
+import _map from 'lodash/map.js';
+import _difference from 'lodash/difference.js';
+
 
 import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getFailedTitles } from 'lib/db';
 
@@ -258,7 +261,7 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
 
 type UnknownTitlesState = 'no-user' | 'ok' | 'error';
 type FailedTitleInfo = { id: string, lastFailure: TimeString };
-type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] };
+type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] | undefined };
 
 async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
   const titles: FailedTitle[] | null = await getFailedTitles();
@@ -274,9 +277,10 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
       return { state: 'no-user', mangaIds: [] };
     }
     const userId: string = user.userId;
-    const mangaIds: string[] = await getUnknownTitles(userId) ?? [];
-    const extraData: EmptyObject | { failedTitles: FailedTitleInfo[] } = user.isAdmin ? { failedTitles: await determineFailedTitles() } : {};
-    return { state: 'ok', mangaIds: mangaIds , ...extraData };
+    const failedTitles: FailedTitleInfo[] | undefined = user.isAdmin ? await determineFailedTitles() : undefined;
+    const unknownMangaIds: string[] = await getUnknownTitles(userId) ?? [];
+    const mangaIds = (failedTitles && unknownMangaIds.length > 0) ? _difference(unknownMangaIds, _map(failedTitles, 'id')) : unknownMangaIds;
+    return { state: 'ok', mangaIds: mangaIds , failedTitles };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
     return { state: 'error', mangaIds: [] };
