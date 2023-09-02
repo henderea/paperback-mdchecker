@@ -915,10 +915,10 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
-eslint-config-henderea@1.1.12:
-  version "1.1.12"
-  resolved "https://registry.yarnpkg.com/eslint-config-henderea/-/eslint-config-henderea-1.1.12.tgz#3322a1fa7ab037b8b0589e73c2301ccc7b6732a8"
-  integrity sha512-Vsi8zIlLdnB0YSRGf7AgH0DDripngKnJrmmV4atlT6ZNvvNbFeoOSoxoNnjcQLP15v1SCl+5Oq6woxVGHP0fVA==
+eslint-config-henderea@1.1.13:
+  version "1.1.13"
+  resolved "https://registry.yarnpkg.com/eslint-config-henderea/-/eslint-config-henderea-1.1.13.tgz#11bebc75fb1a4038437835d8530f7408ab4d6b33"
+  integrity sha512-DAprDhCQ48t7h2ja1kteZeiC/xHuVPgz4GRiPk/QApXqze/lgSvTTXW8aJ7DabdRGuKCYs/3w4L4r7+vK5sVLw==
 
 eslint-import-resolver-node@^0.3.7:
   version "0.3.9"
