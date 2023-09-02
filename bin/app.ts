@@ -1,5 +1,5 @@
 import type { Server } from 'http';
-import type { Application, Request, Response } from 'express';
+import type { Application, Request, Response, NextFunction } from 'express';
 
 import type { User } from 'lib/UserList';
 import type { UpdateCheckResult, MangaInfo } from 'lib/db';
@@ -20,6 +20,15 @@ import { UserList } from 'lib/UserList';
 
 import { Duration, formatEpoch, formatDuration, ensureInt } from 'lib/utils';
 
+declare global {
+  namespace Express {
+    interface Request {
+      userId: string | undefined;
+      user: User | undefined;
+    }
+  }
+}
+
 const app: Application = express();
 
 app.set('view engine', 'ejs');
@@ -32,13 +41,16 @@ schedule.scheduleJob(userUpdateSchedule, () => users.update());
 
 users.update();
 
-function checkUser(userId: string | null | undefined): boolean {
-  return users.hasUser(userId);
-}
-
 function getUser(userId: string | null | undefined): User | undefined {
   return users.getUser(userId);
 }
+
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const userId: string | undefined = req.query.userId as string | undefined;
+  req.userId = userId;
+  req.user = getUser(userId);
+  next();
+});
 
 declare type State = 'unknown' | 'updated' | 'current' | 'no-user' | 'error';
 
@@ -75,11 +87,12 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
  */
 app.get('/manga-check', async (req: Request, res: Response) => {
   try {
-    const userId: string | undefined = req.query.userId as string | undefined;
-    if(!userId || !checkUser(userId)) { // if the user isn't in the table, reject the request right away
+    const user: User | undefined = req.user;
+    if(!user) { // if the user isn't in the table, reject the request right away
       res.json({ epoch: 0, state: 'no-user' });
       return;
     }
+    const userId: string = user.userId;
     const mangaId: string | undefined = req.query.mangaId as string | undefined;
     if(!mangaId) {
       res.json({ epoch: 0, state: 'error' });
@@ -176,12 +189,12 @@ type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | U
  * "failed" - when the update check process failed
  * "unknown-result" - when the update check process ended with an unknown non-success response
  */
-async function getUserUpdateData(userId: string | undefined): Promise<UpdateData> {
+async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
   try {
-    const user = getUser(userId);
-    if(!userId || !user) {
+    if(!user) {
       return { state: 'no-user' };
     }
+    const userId: string = user.userId;
     let userData: UserUpdateData | EmptyObject = {};
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
@@ -225,8 +238,8 @@ async function getUserUpdateData(userId: string | undefined): Promise<UpdateData
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
   const render = (data: UpdateData) => { res.render('update-check', { data }); };
-  const userId: string | undefined = req.query.userId as string | undefined;
-  render(await getUserUpdateData(userId));
+  const user: User | undefined = req.user;
+  render(await getUserUpdateData(user));
 });
 
 function mapForJson(data: UpdateData): Dictionary<any> {
@@ -239,8 +252,8 @@ function mapForJson(data: UpdateData): Dictionary<any> {
 
 app.get('/last-update-check.json', async (req: Request, res: Response) => {
   const pjson = prettyJsonResponse(res);
-  const userId: string | undefined = req.query.userId as string | undefined;
-  pjson(mapForJson(await getUserUpdateData(userId)));
+  const user: User | undefined = req.user;
+  pjson(mapForJson(await getUserUpdateData(user)));
 });
 
 function startServerListen(): Server {
