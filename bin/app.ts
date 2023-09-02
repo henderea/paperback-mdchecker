@@ -257,7 +257,7 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
 });
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: { state: 'no-user' | 'ok' | 'error', mangaIds: string[] }) => { res.render('unkwnown-titles',  data ); };
+  const render = (data: { state: 'no-user' | 'ok' | 'error', mangaIds: string[] }) => { res.render('unknown-titles',  data ); };
   try {
     const user: User | undefined = req.user;
     if(!user) {
