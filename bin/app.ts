@@ -66,7 +66,7 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
 }
 
 /**
- * Header: user-id
+ * query: userId
  * query: mangaId
  * query: lastCheckEpoch
  *
@@ -75,7 +75,7 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
  */
 app.get('/manga-check', async (req: Request, res: Response) => {
   try {
-    const userId: string | undefined = req.header('user-id');
+    const userId: string | undefined = req.query.userId as string | undefined;
     if(!userId || !checkUser(userId)) { // if the user isn't in the table, reject the request right away
       res.json({ epoch: 0, state: 'no-user' });
       return;
