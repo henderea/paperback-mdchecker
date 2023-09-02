@@ -29,3 +29,11 @@ create table update_check (
 );
 
 create index ix_update_check_update_count_check_start_time on update_check (update_count, check_start_time);
+
+create table failed_titles (
+  manga_id text not null,
+  last_failure bigint not null,
+  constraint pk_failed_titles primary key (manga_id)
+);
+
+create index ix_failed_titles_last_failure_manga_id on failed_titles (last_failure, manga_id);

@@ -164,3 +164,26 @@ export async function getUnknownTitles(userId: string): Promise<string[] | null>
   }
   return result.rows.map((r) => r[0]);
 }
+
+export interface FailedTitle {
+  manga_id: string;
+  last_failure: number;
+}
+
+export async function getFailedTitles(): Promise<FailedTitle[] | null> {
+  const result: QueryResult<FailedTitle> = await query('select manga_id, last_failure from failed_titles order by last_failure desc');
+  if(result.rowCount <= 0) {
+    return null;
+  }
+  return result.rows;
+}
+
+export async function addFailedTitles(mangaIds: string[], epoch: number): Promise<void> {
+  for(const mangaId of mangaIds) {
+    await query('insert into failed_titles (manga_id, last_failure) values ($1, $2)', [mangaId, epoch]);
+  }
+}
+
+export async function cleanFailedTitles(mangaIds: string[]): Promise<void> {
+  await query('delete from failed_titles where manga_id = ANY ($1)', [mangaIds]);
+}

@@ -2,7 +2,7 @@ import type { Server } from 'http';
 import type { Application, Request, Response, NextFunction } from 'express';
 
 import type { User } from 'lib/UserList';
-import type { UpdateCheckResult, MangaInfo } from 'lib/db';
+import type { UpdateCheckResult, MangaInfo, FailedTitle } from 'lib/db';
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
@@ -12,7 +12,7 @@ import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getFailedTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -257,7 +257,16 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
 });
 
 type UnknownTitlesState = 'no-user' | 'ok' | 'error';
-type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[] };
+type FailedTitleInfo = { id: string, lastFailure: TimeString };
+type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] };
+
+async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
+  const titles: FailedTitle[] | null = await getFailedTitles();
+  if(!titles) {
+    return [];
+  }
+  return titles.map((t) => ({ id: t.manga_id, lastFailure: formatEpoch(t.last_failure) }));
+}
 
 async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitlesData> {
   try {
@@ -266,7 +275,8 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
     }
     const userId: string = user.userId;
     const mangaIds: string[] = await getUnknownTitles(userId) ?? [];
-    return { state: 'ok', mangaIds: mangaIds };
+    const extraData: EmptyObject | { failedTitles: FailedTitleInfo[] } = user.isAdmin ? { failedTitles: await determineFailedTitles() } : {};
+    return { state: 'ok', mangaIds: mangaIds , ...extraData };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
     return { state: 'error', mangaIds: [] };
@@ -274,7 +284,7 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
 }
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: UnknownTitlesData) => { res.render('unknown-titles',  data ); };
+  const render = (data: UnknownTitlesData) => { res.render('unknown-titles',  { data } ); };
   const user: User | undefined = req.user;
   render(await getUnknownTitlesData(user));
 });

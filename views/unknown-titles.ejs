@@ -6,21 +6,33 @@
   <body>
     <table class="mainTable">
       <tbody>
-        <% if(state == 'ok') { %>
-          <% if(mangaIds.length > 0) { %>
-            <% mangaIds.forEach((m) => { %>
+        <% if(data.state == 'ok') { %>
+          <% if(data.mangaIds.length > 0) { %>
+            <% data.mangaIds.forEach((m) => { %>
             <tr>
+              <th>Unknown:</th>
               <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
             </tr>
             <% }); %>
           <% } else { %>
             <tr>
-              <td class="ok">No Unknown Titles</td>
+              <td colspan="2" class="ok">No Unknown Titles</td>
             </tr>
+          <% } %>
+          <% if(data.failedTitles && data.failedTitles.length > 0) { %>
+            <tr>
+              <td colspan="2">&nbsp;</td>
+            </tr>
+            <% data.failedTitles.forEach((t) => { %>
+              <tr>
+                <th>Failed:</th>
+                <td><%= t.id %> (<%= t.lastFailure %>; <a href="https://mangadex.org/title/<%= t.id %>" target="_blank">GO</a>)</td>
+              </tr>
+            <% }); %>
           <% } %>
         <% } else { %>
           <tr>
-            <td class="error"><%= state %></td>
+            <td class="error"><%= data.state %></td>
           </tr>
         <% } %>
       </tbody>

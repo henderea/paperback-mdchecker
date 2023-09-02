@@ -8,7 +8,7 @@ import entities = require('entities');
 import _map from 'lodash/map.js';
 import _difference from 'lodash/difference.js';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -163,17 +163,21 @@ async function queryTitles(): Promise<void> {
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
         console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+        await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
           const fetchedIds: string[] = _map(mangas, 'id');
           const missingIds: string[] = _difference(mangaIds, fetchedIds);
           const missingCount: number = missingIds.length;
           if(missingCount > 0) {
             console.log(`Failed title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
+            await addFailedTitles(missingIds, start);
           }
         }
       } else {
         console.log(`No titles were able to be fetched after ${formatDuration(Date.now() - start)}`);
         console.log(`Failed title update on ${mangaIds.length} title${mangaIds.length == 1 ? '' : 's'}:\n${mangaIds.join('\n')}`);
+        await cleanFailedTitles(mangaIds);
+        await addFailedTitles(mangaIds, start);
       }
     } else {
       // console.log(`No titles found to update after ${formatDuration(Date.now() - start)}`);
