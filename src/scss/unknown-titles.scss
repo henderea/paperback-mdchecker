@@ -24,6 +24,10 @@ body, html {
   color: red;
 }
 
+.ok {
+  color: green;
+}
+
 @media (prefers-color-scheme: dark) {
   body, html {
     background-color: #181A1F;

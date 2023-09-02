@@ -7,11 +7,17 @@
     <table class="mainTable">
       <tbody>
         <% if(state == 'ok') { %>
-          <% mangaIds.forEach((m) => { %>
-          <tr>
-            <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
-          </tr>
-          <% }); %>
+          <% if(mangaIds.length > 0) { %>
+            <% mangaIds.forEach((m) => { %>
+            <tr>
+              <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
+            </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td class="ok">No Unknown Titles</td>
+            </tr>
+          <% } %>
         <% } else { %>
           <tr>
             <td class="error"><%= state %></td>
