@@ -14,7 +14,7 @@
     "build": "yarn build:styles && yarn build:app && yarn build:update-check",
     "build:app": "./scripts/ncc-build-release.sh app",
     "build:update-check": "./scripts/ncc-build-release.sh update-check",
-    "build:styles": "rm -rf public/css/* && sass --style=compressed src/scss:public/css"
+    "build:styles": "rm -rf public/css/generated/* && sass --style=compressed src/scss:public/css/generated"
   },
   "dependencies": {
     "ejs": "^3.1.9",
