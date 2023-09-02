@@ -11,9 +11,6 @@ import schedule from 'node-schedule';
 import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
-import _map from 'lodash/map.js';
-import _difference from 'lodash/difference.js';
-
 
 import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getFailedTitles } from 'lib/db';
 
@@ -278,8 +275,7 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
     }
     const userId: string = user.userId;
     const failedTitles: FailedTitleInfo[] | undefined = user.isAdmin ? await determineFailedTitles() : undefined;
-    const unknownMangaIds: string[] = await getUnknownTitles(userId) ?? [];
-    const mangaIds = (failedTitles && unknownMangaIds.length > 0) ? _difference(unknownMangaIds, _map(failedTitles, 'id')) : unknownMangaIds;
+    const mangaIds: string[] = await getUnknownTitles(userId) ?? [];
     return { state: 'ok', mangaIds: mangaIds , failedTitles };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
