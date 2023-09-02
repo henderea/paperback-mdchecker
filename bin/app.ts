@@ -256,21 +256,27 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
   pjson(mapForJson(await getUserUpdateData(user)));
 });
 
-app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: { state: 'no-user' | 'ok' | 'error', mangaIds: string[] }) => { res.render('unknown-titles',  data ); };
+type UnknownTitlesState = 'no-user' | 'ok' | 'error';
+type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[] };
+
+async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitlesData> {
   try {
-    const user: User | undefined = req.user;
     if(!user) {
-      render({ state: 'no-user', mangaIds: [] });
-      return;
+      return { state: 'no-user', mangaIds: [] };
     }
     const userId: string = user.userId;
-    const mangaIds: string[] | null = await getUnknownTitles(userId);
-    render({ state: 'ok', mangaIds: mangaIds ?? [] });
+    const mangaIds: string[] = await getUnknownTitles(userId) ?? [];
+    return { state: 'ok', mangaIds: mangaIds };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
-    render({ state: 'error', mangaIds: [] });
+    return { state: 'error', mangaIds: [] };
   }
+}
+
+app.get('/unknown-titles', async (req: Request, res: Response) => {
+  const render = (data: UnknownTitlesData) => { res.render('unknown-titles',  data ); };
+  const user: User | undefined = req.user;
+  render(await getUnknownTitlesData(user));
 });
 
 function startServerListen(): Server {
