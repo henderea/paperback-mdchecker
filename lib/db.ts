@@ -156,3 +156,11 @@ export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> 
   }
   return result.rows[0];
 }
+
+export async function getUnknownTitles(userId: string): Promise<string[] | null> {
+  const result: QueryResult<[string]> = await query(`select manga_id from user_manga where (title is null or title = '') and user_id = $1`, [userId], 'array');
+  if(result.rowCount <= 0) {
+    return null;
+  }
+  return result.rows.map((r) => r[0]);
+}

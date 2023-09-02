@@ -12,7 +12,7 @@ import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -254,6 +254,23 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
   const pjson = prettyJsonResponse(res);
   const user: User | undefined = req.user;
   pjson(mapForJson(await getUserUpdateData(user)));
+});
+
+app.get('/unknown-titles', async (req: Request, res: Response) => {
+  const render = (data: { state: 'no-user' | 'ok' | 'error', mangaIds: string[] }) => { res.render('unkwnown-titles',  data ); };
+  try {
+    const user: User | undefined = req.user;
+    if(!user) {
+      render({ state: 'no-user', mangaIds: [] });
+      return;
+    }
+    const userId: string = user.userId;
+    const mangaIds: string[] | null = await getUnknownTitles(userId);
+    render({ state: 'ok', mangaIds: mangaIds ?? [] });
+  } catch (e) {
+    console.error('Encountered error in unknown-titles request handler', e);
+    render({ state: 'error', mangaIds: [] });
+  }
 });
 
 function startServerListen(): Server {

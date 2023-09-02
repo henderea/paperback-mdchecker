@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>Unknown Titles</title>
+    <link rel="stylesheet" href="/css/generated/unknown-titles.css"/>
+  </head>
+  <body>
+    <table class="mainTable">
+      <tbody>
+        <% if(state == 'ok') { %>
+          <% mangaIds.forEach((m) => { %>
+          <tr>
+            <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
+          </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td class="error"><%= state %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </body>
+</html>

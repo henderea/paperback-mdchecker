@@ -1,0 +1,43 @@
+body, html {
+  background-color: #fff;
+}
+
+.mainTable {
+  margin: 20px auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  
+  tbody {
+    th, td {
+      text-align: left;
+      font-size: 1.8em;
+      padding: 10px;
+
+      a {
+        color: blue;
+      }
+    }
+  }
+}
+
+.error {
+  color: red;
+}
+
+@media (prefers-color-scheme: dark) {
+  body, html {
+    background-color: #181A1F;
+  }
+
+  .mainTable {
+    tbody {
+      th, td {
+        color: #ddd;
+
+        a {
+          color: orange;
+        }
+      }
+    }
+  }
+}
