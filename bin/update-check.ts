@@ -61,9 +61,10 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
     }
 
     for(const chapter of json.data) {
-      const mangaId = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
+      const pages: number = Number(chapter.attributes.pages);
+      const mangaId: string = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
 
-      if(mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
+      if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
       }
     }
