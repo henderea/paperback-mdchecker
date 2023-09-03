@@ -19,6 +19,9 @@ export class User {
   get roles(): Role[] { return this._roles; }
   hasAnyRole(...roles: Role[]) { return this.roles.some((r) => roles.includes(r)); }
   get isAdmin(): boolean { return this._isAdmin; }
+  ifAdmin<T>(value: T): T | undefined { return this.isAdmin ? value : undefined; }
+  ifAdminF<T>(value: () => T): T | undefined { return this.isAdmin ? value() : undefined; }
+  async ifAdminP<T>(value: () => Promise<T>): Promise<T | undefined> { return this.isAdmin ? await value() : undefined; }
 }
 
 function processUsers(data: UserResult[]): Dictionary<User> {

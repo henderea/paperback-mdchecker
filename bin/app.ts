@@ -219,7 +219,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
     const end: TimeString = formatEpoch(endEpoch);
     const duration: DurationString = formatDuration(endEpoch - startEpoch);
     const updateCount: number = lastCheck.update_count;
-    const count: number | undefined = user.isAdmin ? updateCount : undefined;
+    const count: number | undefined = user.ifAdmin(updateCount);
     const state: UpdateCheckState = getUpdateCheckStateFromCount(updateCount);
     return {
       state,
@@ -274,10 +274,9 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
       return { state: 'no-user', mangaIds: [] };
     }
     const userId: string = user.userId;
-    const isAdmin: boolean = user.isAdmin;
-    const failedTitles: FailedTitleInfo[] | undefined = isAdmin ? await determineFailedTitles() : undefined;
-    const mangaIds: string[] = await getUnknownTitles(userId, isAdmin) ?? [];
-    return { state: 'ok', mangaIds: mangaIds , failedTitles };
+    const failedTitles: FailedTitleInfo[] | undefined = await user.ifAdminP(determineFailedTitles);
+    const mangaIds: string[] = await getUnknownTitles(userId, user.isAdmin) ?? [];
+    return { state: 'ok', mangaIds, failedTitles };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
     return { state: 'error', mangaIds: [] };
