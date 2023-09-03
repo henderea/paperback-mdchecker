@@ -274,8 +274,9 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
       return { state: 'no-user', mangaIds: [] };
     }
     const userId: string = user.userId;
-    const failedTitles: FailedTitleInfo[] | undefined = user.isAdmin ? await determineFailedTitles() : undefined;
-    const mangaIds: string[] = await getUnknownTitles(userId) ?? [];
+    const isAdmin: boolean = user.isAdmin;
+    const failedTitles: FailedTitleInfo[] | undefined = isAdmin ? await determineFailedTitles() : undefined;
+    const mangaIds: string[] = await getUnknownTitles(userId, isAdmin) ?? [];
     return { state: 'ok', mangaIds: mangaIds , failedTitles };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);

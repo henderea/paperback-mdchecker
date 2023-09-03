@@ -161,8 +161,8 @@ export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> 
   return result.rows[0];
 }
 
-export async function getUnknownTitles(userId: string): Promise<string[] | null> {
-  const result: QueryResult<[string]> = await aQuery(`select manga_id from user_manga where (manga_title is null or manga_title = '') and user_id = $1 and manga_id not in (select distinct manga_id from failed_titles)`, [userId]);
+export async function getUnknownTitles(userId: string, isAdmin: boolean): Promise<string[] | null> {
+  const result: QueryResult<[string]> = await aQuery(`select manga_id from user_manga where (manga_title is null or manga_title = '') and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
   if(result.rowCount <= 0) {
     return null;
   }
