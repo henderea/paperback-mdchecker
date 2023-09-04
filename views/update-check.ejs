@@ -50,7 +50,7 @@
                   <tbody>
                     <% data.updatesSinceLastFetch.forEach((m) => { %>
                       <tr>
-                        <td class="time-ago">[<%= m.lastUpdateAgo %> ago]</td>
+                        <td class="time-ago">(<%= m.lastUpdateAgo %> ago)</td>
                         <td class="link-cell"><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></td>
                       </tr><% }); %>
                   </tbody>
