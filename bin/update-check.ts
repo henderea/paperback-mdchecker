@@ -1,6 +1,6 @@
-import type { MangaInfo } from 'lib/db';
+import type { MangaInfo, UserPushUpdateResult } from 'lib/db';
 
-import { updateSchedule, titleUpdateSchedule, noStartStopLogs } from 'lib/env';
+import { updateSchedule, titleUpdateSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
 import schedule from 'node-schedule';
 import got from 'got';
@@ -8,13 +8,14 @@ import entities = require('entities');
 import _map from 'lodash/map.js';
 import _difference from 'lodash/difference.js';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration, catchVoidError, formatDuration } from 'lib/utils';
+import { Duration, catchVoidError, ensureInt, formatDuration } from 'lib/utils';
+import { Pushover } from 'lib/Pushover';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
 const MANGADEX_API: string = 'https://api.mangadex.org';
@@ -93,6 +94,20 @@ function decodeHTMLEntity(str: string | undefined): string | undefined {
   return entities.decodeHTML(str);
 }
 
+async function sendUserUpdatesPush(epoch: number): Promise<void> {
+  if(!pushoverAppToken) { return; }
+  const userUpdates: UserPushUpdateResult[] | null = await listUserPushUpdates(epoch);
+  if(!userUpdates) { return; }
+  for(const u of userUpdates) {
+    try {
+      const count: number = ensureInt(u.count);
+      await new Pushover(pushoverAppToken, u.pushover_token).message(`Found ${count} new manga update${count == 1 ? '' : 's'}`).send();
+    } catch (e) {
+      console.error(`Encountered issue sending updates push for user ${u.user_id}`, e);
+    }
+  }
+}
+
 async function queryUpdates(): Promise<void> {
   const epoch: number = Date.now();
   try {
@@ -110,6 +125,7 @@ async function queryUpdates(): Promise<void> {
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
+    await sendUserUpdatesPush(epoch);
   } catch (e) {
     console.error('Encountered error fetching updates', e);
     catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2), 'Encountered error updating update check result');

@@ -31,10 +31,11 @@ async function aQuery<T extends QueryResultRow>(text: string, values: any[] = []
 export declare interface UserResult {
   user_id: string;
   roles: string | null;
+  pushover_token: string | null;
 }
 
 export async function listUsers(): Promise<UserResult[]> {
-  const result: QueryResult<UserResult> = await query('select user_id, roles from user_id');
+  const result: QueryResult<UserResult> = await query('select user_id, roles, pushover_token from user_id');
   if(result.rowCount <= 0) {
     return [];
   }
@@ -145,6 +146,20 @@ export async function addUpdateCheck(epoch: number): Promise<void> {
 
 export async function updateCompletedUpdateCheck(startEpoch: number, endEpoch: number, count: number): Promise<void> {
   await query('update update_check set check_end_time = $2, update_count = $3 where check_start_time = $1', [startEpoch, endEpoch, count]);
+}
+
+export interface UserPushUpdateResult {
+  count: number;
+  user_id: string;
+  pushover_token: string;
+}
+
+export async function listUserPushUpdates(epoch: number): Promise<UserPushUpdateResult[] | null> {
+  const result: QueryResult<UserPushUpdateResult> = await query(`select count(distinct manga_id) as count, user_id, pushover_token from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token`, [epoch]);
+  if(result.rowCount <= 0) {
+    return null;
+  }
+  return result.rows;
 }
 
 export interface UpdateCheckResult {

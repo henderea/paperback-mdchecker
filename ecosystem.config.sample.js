@@ -21,7 +21,8 @@ module.exports = {
       'UPDATE_SCHEDULE': '*/20 * * * *',
       'TITLE_UPDATE_SCHEDULE': '30 * * * *',
       'USER_UPDATE_SCHEDULE': '*/20 * * * *',
-      'NO_START_STOP_LOGS': true
+      'NO_START_STOP_LOGS': true,
+      'PUSHOVER_APP_TOKEN': 'abc123'
     }
   }, {
     name: 'paperback-mdchecker-checker',
@@ -41,7 +42,8 @@ module.exports = {
       'UPDATE_SCHEDULE': '*/20 * * * *',
       'TITLE_UPDATE_SCHEDULE': '30 * * * *',
       'USER_UPDATE_SCHEDULE': '*/20 * * * *',
-      'NO_START_STOP_LOGS': true
+      'NO_START_STOP_LOGS': true,
+      'PUSHOVER_APP_TOKEN': 'abc123'
     }
   }]
 };

@@ -8,11 +8,13 @@ export class User {
   private readonly _userId: string;
   private readonly _roles: Role[];
   private readonly _isAdmin: boolean;
+  private readonly _pushoverToken: string | null;
 
   constructor(row: UserResult) {
     this._userId = row.user_id;
     this._roles = `${row.roles}`.split(/,/g).map((s) => s.trim()) as Role[];
     this._isAdmin = this.hasAnyRole('ADMIN');
+    this._pushoverToken = row.pushover_token;
   }
 
   get userId(): string { return this._userId; }
@@ -22,6 +24,8 @@ export class User {
   ifAdmin<T>(value: T): T | undefined { return this.isAdmin ? value : undefined; }
   ifAdminF<T>(value: () => T): T | undefined { return this.isAdmin ? value() : undefined; }
   async ifAdminP<T>(value: () => Promise<T>): Promise<T | undefined> { return this.isAdmin ? await value() : undefined; }
+  get pushoverToken(): string | null { return this._pushoverToken; }
+  get hasPushover(): boolean { return !!this.pushoverToken; }
 }
 
 function processUsers(data: UserResult[]): Dictionary<User> {

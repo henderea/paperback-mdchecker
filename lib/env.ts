@@ -37,3 +37,4 @@ export const updateSchedule: string = processString(process.env.UPDATE_SCHEDULE)
 export const titleUpdateSchedule: string = processString(process.env.TITLE_UPDATE_SCHEDULE) || '30 * * * *';
 export const userUpdateSchedule: string = processString(process.env.USER_UPDATE_SCHEDULE) || '*/20 * * * *';
 export const noStartStopLogs: boolean = processBoolean(process.env.NO_START_STOP_LOGS, false);
+export const pushoverAppToken: string | null = processString(process.env.PUSHOVER_APP_TOKEN);

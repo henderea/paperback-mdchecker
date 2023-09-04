@@ -1,6 +1,7 @@
 create table user_id (
   user_id text not null,
   roles text,
+  pushover_token text,
   constraint pk_user primary key (user_id)
 );
 
