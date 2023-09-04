@@ -13,15 +13,19 @@ body, html {
       font-size: 1.8em;
       border: 2px solid #aaa;
       padding: 20px;
+    }
+  }
+}
+
+.userUpdatesTable {
+  tbody {
+    th, td {
+      border: none !important;
+      padding: 10px !important;
+      margin: 0;
 
       a {
         color: blue;
-      }
-
-      ul {
-        li {
-          line-height: 1.5em;
-        }
       }
     }
   }
@@ -58,6 +62,14 @@ body, html {
     tbody {
       th, td {
         border-color: #888;
+        color: #ddd;
+      }
+    }
+  }
+
+  .userUpdatesTable {
+    tbody {
+      th, td {
         color: #ddd;
 
         a {

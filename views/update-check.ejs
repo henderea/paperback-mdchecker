@@ -46,7 +46,15 @@
             <td>
               <b>Count:</b> <%= data.updatesSinceLastFetch.length %><br>
               <% if(data.updatesSinceLastFetch.length > 0) { %>
-              <ul><% data.updatesSinceLastFetch.forEach((m) => { %><li><span style="white-space: nowrap;">(<%= m.lastUpdateAgo %> ago)</span> <a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></li><% }); %></ul>
+                <table class="userUpdatesTable">
+                  <tbody>
+                    <% data.updatesSinceLastFetch.forEach((m) => { %>
+                      <tr>
+                        <td class="time-ago"><%= m.lastUpdateAgo %> ago</td>
+                        <td class="link-cell"><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></td>
+                      </tr><% }); %>
+                  </tbody>
+                </table>
               <% } %>
             </td>
           </tr>
