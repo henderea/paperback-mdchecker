@@ -74,12 +74,12 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
   return ensureInt(result.rows[0][0]);
 }
 
-export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaInfo[]> {
-  const result: QueryResult<[string, string | null]> = await aQuery('select manga_id, manga_title from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by manga_title, manga_id', [userId, latestCheck]);
+export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaUpdateInfo[]> {
+  const result: QueryResult<[string, string | null, number]> = await aQuery('select manga_id, manga_title, last_update from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by manga_title, manga_id', [userId, latestCheck]);
   if(result.rowCount <= 0) {
     return [];
   }
-  return result.rows.map(([id, title]) => ({ id, title: title ?? null }));
+  return result.rows.map(([id, title, lastUpdate]) => ({ id, title: title ?? null, lastUpdate: ensureInt(lastUpdate) }));
 }
 
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
@@ -125,6 +125,10 @@ export async function getLatestUpdate(): Promise<number> {
 export interface MangaInfo {
   id: string;
   title: string | null;
+}
+
+export interface MangaUpdateInfo extends MangaInfo {
+  lastUpdate: number;
 }
 
 export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {

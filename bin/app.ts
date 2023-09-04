@@ -2,7 +2,7 @@ import type { Server } from 'http';
 import type { Application, Request, Response, NextFunction } from 'express';
 
 import type { User } from 'lib/UserList';
-import type { UpdateCheckResult, MangaInfo, FailedTitle } from 'lib/db';
+import type { UpdateCheckResult, MangaInfo, MangaUpdateInfo, FailedTitle } from 'lib/db';
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
@@ -18,7 +18,7 @@ import { shutdownHandler } from 'lib/ShutdownHandler';
 
 import { UserList } from 'lib/UserList';
 
-import { Duration, formatEpoch, formatDuration, ensureInt } from 'lib/utils';
+import { Duration, formatEpoch, formatDuration, ensureInt, formatDurationShort } from 'lib/utils';
 
 declare global {
   namespace Express {
@@ -155,7 +155,11 @@ type TimeString = string;
  */
 type DurationString = string;
 
-type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: MangaInfo[] };
+interface FormattedMangaUpdateInfo extends MangaInfo {
+  lastUpdateAgo: string;
+}
+
+type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: FormattedMangaUpdateInfo[] };
 
 type UpdateNoUser = { state: 'no-user' };
 type UpdateError = { state: 'error' };
@@ -171,6 +175,11 @@ type UpdateEnded = UpdateEndedBase | (UpdateEndedBase & UserUpdateData);
 
 type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | UpdateEnded;
 
+
+function processMangaUpdateInfo(mangas: MangaUpdateInfo[]): FormattedMangaUpdateInfo[] {
+  const epoch: number = Date.now();
+  return mangas.map(({ id, title, lastUpdate }) => ({ id, title, lastUpdateAgo: lastUpdate > 0 ? formatDurationShort(epoch - lastUpdate) : '???' }));
+}
 
 
 /**
@@ -199,7 +208,8 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
     const lastUserCheck: number = await getLastUserCheck(userId);
     if(lastUserCheck > 0) {
       const lastUserFetch: TimeString = formatEpoch(lastUserCheck);
-      const updatesSinceLastFetch: MangaInfo[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
+      const userUpdates: MangaUpdateInfo[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
+      const updatesSinceLastFetch: FormattedMangaUpdateInfo[] = processMangaUpdateInfo(userUpdates);
       userData = { lastUserFetch, updatesSinceLastFetch };
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();

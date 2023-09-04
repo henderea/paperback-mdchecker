@@ -34,6 +34,19 @@ export function formatDuration(d: number): string {
   return parts.join(' ');
 }
 
+export function formatDurationShort(d: number): string {
+  const h: number = Math.floor(d / (60 * 60 * 1000));
+  const m: number = Math.floor((d / (60 * 1000)) % 60);
+  const s: number = Math.floor((d / 1000) % 60);
+  const ms: number = d % 1000;
+  const parts: string[] = [];
+  if(h > 0) { parts.push(`${h}h`); }
+  if(m > 0) { parts.push(`${m}m`); }
+  if(s > 0) { parts.push(`${s}s`); }
+  if(parts.length <= 0 && ms > 0) { parts.push(`${ms}ms`); }
+  return parts.join(' ');
+}
+
 export function ensureInt(v: number | string | any): number {
   return parseInt(String(v));
 }
