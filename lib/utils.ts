@@ -44,7 +44,7 @@ export function formatDurationShort(d: number): string {
   const parts: string[] = [];
   if(h > 0) { parts.push(`${h}h`); }
   if(m > 0) { parts.push(`${m}m`); }
-  if(h <= 0 && s > 0) { parts.push(`${s}s`); }
+  if(h <= 0 && m < 30 && s > 0) { parts.push(`${s}s`); }
   return parts.join(' ');
 }
 
