@@ -34,7 +34,7 @@ export function formatDuration(d: number): string {
   return parts.join(' ');
 }
 
-export function formatDurationShort(d: number): string {
+export function formatDurationShort(d: number, maxForSeconds: number = Duration.MINUTES(20), maxForMinutes: number = Duration.HOURS(12)): string {
   if(d < 1000) {
     return '0s';
   }
@@ -43,8 +43,8 @@ export function formatDurationShort(d: number): string {
   const s: number = Math.floor((d / 1000) % 60);
   const parts: string[] = [];
   if(h > 0) { parts.push(`${h}h`); }
-  if(m > 0) { parts.push(`${m}m`); }
-  if(h <= 0 && m < 30 && s > 0) { parts.push(`${s}s`); }
+  if(d < maxForMinutes && m > 0) { parts.push(`${m}m`); }
+  if(d < maxForSeconds && s > 0) { parts.push(`${s}s`); }
   return parts.join(' ');
 }
 
