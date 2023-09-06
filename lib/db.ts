@@ -172,7 +172,7 @@ export interface UserPushUpdateResult {
 }
 
 export async function listUserPushUpdates(epoch: number): Promise<UserPushUpdateResult[] | null> {
-  const result: QueryResult<UserPushUpdateResult> = await query(`select count(distinct manga_id) as count, user_id, pushover_token, pushover_app_token_override from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token`, [epoch]);
+  const result: QueryResult<UserPushUpdateResult> = await query(`select count(distinct manga_id) as count, user_id, pushover_token, pushover_app_token_override from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token, pushover_app_token_override`, [epoch]);
   if(result.rowCount <= 0) {
     return null;
   }
