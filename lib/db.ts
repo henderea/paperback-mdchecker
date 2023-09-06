@@ -28,11 +28,22 @@ async function aQuery<T extends QueryResultRow>(text: string, values: any[] = []
   return await query(text, values, 'array');
 }
 
-export declare interface UserResult {
+export declare interface BasicUserResult {
   user_id: string;
   roles: string | null;
+}
+
+export declare interface UserResult extends BasicUserResult {
   pushover_token: string | null;
   pushover_app_token_override: string | null;
+}
+
+export async function listUsersBasic(): Promise<BasicUserResult[]> {
+  const result: QueryResult<BasicUserResult> = await query('select user_id, roles from user_id');
+  if(result.rowCount <= 0) {
+    return [];
+  }
+  return result.rows;
 }
 
 export async function listUsers(): Promise<UserResult[]> {
