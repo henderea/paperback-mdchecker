@@ -9,12 +9,14 @@ export class User {
   private readonly _roles: Role[];
   private readonly _isAdmin: boolean;
   private readonly _pushoverToken: string | null;
+  private readonly _pushoverAppTokenOverride: string | null;
 
   constructor(row: UserResult) {
     this._userId = row.user_id;
     this._roles = `${row.roles}`.split(/,/g).map((s) => s.trim()) as Role[];
     this._isAdmin = this.hasAnyRole('ADMIN');
     this._pushoverToken = row.pushover_token;
+    this._pushoverAppTokenOverride = row.pushover_app_token_override;
   }
 
   get userId(): string { return this._userId; }
@@ -25,7 +27,9 @@ export class User {
   ifAdminF<T>(value: () => T): T | undefined { return this.isAdmin ? value() : undefined; }
   async ifAdminP<T>(value: () => Promise<T>): Promise<T | undefined> { return this.isAdmin ? await value() : undefined; }
   get pushoverToken(): string | null { return this._pushoverToken; }
+  get pushoverAppTokenOverride(): string | null { return this._pushoverAppTokenOverride; }
   get hasPushover(): boolean { return !!this.pushoverToken; }
+  getPushoverAppToken(token: string | null): string | null { return this.pushoverAppTokenOverride ?? token; }
 }
 
 function processUsers(data: UserResult[]): Dictionary<User> {

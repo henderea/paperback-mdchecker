@@ -95,13 +95,15 @@ function decodeHTMLEntity(str: string | undefined): string | undefined {
 }
 
 async function sendUserUpdatesPush(epoch: number): Promise<void> {
-  if(!pushoverAppToken) { return; }
   const userUpdates: UserPushUpdateResult[] | null = await listUserPushUpdates(epoch);
   if(!userUpdates) { return; }
   for(const u of userUpdates) {
     try {
-      const count: number = ensureInt(u.count);
-      await new Pushover(pushoverAppToken, u.pushover_token).message(`Found ${count} new manga update${count == 1 ? '' : 's'}`).send();
+      const appToken: string | null = u.pushover_app_token_override ?? pushoverAppToken;
+      if(appToken) {
+        const count: number = ensureInt(u.count);
+        await new Pushover(appToken, u.pushover_token).message(`Found ${count} new manga update${count == 1 ? '' : 's'}`).send();
+      }
     } catch (e) {
       console.error(`Encountered issue sending updates push for user ${u.user_id}`, e);
     }
