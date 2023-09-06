@@ -56,9 +56,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
     const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
 
     if(json.data === undefined) {
-      // Log this, no need to throw.
-      console.log(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
-      return updatedManga;
+      throw new Error(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
     }
 
     for(const chapter of json.data) {
