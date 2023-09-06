@@ -15,7 +15,7 @@ export class PushoverUser extends User {
   get pushoverToken(): string | null { return this._pushoverToken; }
   get pushoverAppTokenOverride(): string | null { return this._pushoverAppTokenOverride; }
   get hasPushover(): boolean { return !!this.pushoverToken; }
-  getPushoverAppToken(token: string | null): string | null { return this.pushoverAppTokenOverride ?? token; }
+  getPushoverAppToken(token: string | null): string | null { return this.pushoverAppTokenOverride || token; }
 }
 
 function processPushoverUsers(data: UserResult[]): Dictionary<PushoverUser> {

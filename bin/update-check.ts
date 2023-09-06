@@ -99,7 +99,7 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
   if(!userUpdates) { return; }
   for(const u of userUpdates) {
     try {
-      const appToken: string | null = u.pushover_app_token_override ?? pushoverAppToken;
+      const appToken: string | null = u.pushover_app_token_override || pushoverAppToken;
       if(appToken) {
         const count: number = ensureInt(u.count);
         await new Pushover(appToken, u.pushover_token).message(`Found ${count} new manga update${count == 1 ? '' : 's'}`).send();
