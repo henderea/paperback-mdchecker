@@ -19,6 +19,21 @@
               <td colspan="2" class="ok">No Unknown Titles</td>
             </tr>
           <% } %>
+          <tr>
+            <td colspan="2">&nbsp;</td>
+          </tr>
+          <% if(data.nonLatinTitles.length > 0) { %>
+            <% data.nonLatinTitles.forEach((m) => { %>
+            <tr>
+              <th>Non-Latin:</th>
+              <td><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title %></a></td>
+            </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="2" class="ok">No Non-Latin Titles</td>
+            </tr>
+          <% } %>
           <% if(data.failedTitles && data.failedTitles.length > 0) { %>
             <tr>
               <td colspan="2">&nbsp;</td>

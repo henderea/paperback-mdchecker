@@ -139,6 +139,11 @@ export interface MangaInfo {
   title: string | null;
 }
 
+export interface TitledMangaInfo {
+  manga_id: string;
+  manga_title: string;
+}
+
 export interface MangaUpdateInfo extends MangaInfo {
   lastUpdate: number;
 }
@@ -194,11 +199,19 @@ export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> 
 }
 
 export async function getUnknownTitles(userId: string, isAdmin: boolean): Promise<string[] | null> {
-  const result: QueryResult<[string]> = await aQuery(`select manga_id from user_manga where (manga_title is null or manga_title = '') and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
+  const result: QueryResult<[string]> = await aQuery(`select manga_id from user_manga where (manga_title is null or length(manga_title) <= 0) and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
   if(result.rowCount <= 0) {
     return null;
   }
   return result.rows.map((r) => r[0]);
+}
+
+export async function getNonLatinTitles(userId: string): Promise<TitledMangaInfo[] | null> {
+  const result: QueryResult<TitledMangaInfo> = await query(`select manga_id, manga_title from user_manga where user_id = $1 and manga_title is not null and length(manga_title) > 0 and manga_title ~* '[^[:alnum:][:blank:][:punct:][:cntrl:]]'`, [userId]);
+  if(result.rowCount <= 0) {
+    return null;
+  }
+  return result.rows;
 }
 
 export interface FailedTitle {

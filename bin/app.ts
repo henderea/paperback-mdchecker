@@ -2,7 +2,7 @@ import type { Server } from 'http';
 import type { Application, Request, Response, NextFunction } from 'express';
 
 import type { User } from 'lib/UserList';
-import type { UpdateCheckResult, MangaInfo, MangaUpdateInfo, FailedTitle } from 'lib/db';
+import type { UpdateCheckResult, MangaInfo, TitledMangaInfo, MangaUpdateInfo, FailedTitle } from 'lib/db';
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
@@ -12,7 +12,7 @@ import express from 'express';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getFailedTitles } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -268,7 +268,8 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
 
 type UnknownTitlesState = 'no-user' | 'ok' | 'error';
 type FailedTitleInfo = { id: string, lastFailure: TimeString };
-type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] | undefined };
+type NonLatinTitleInfo = { id: string, title: string };
+type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] | undefined, nonLatinTitles: NonLatinTitleInfo[] };
 
 async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
   const titles: FailedTitle[] | null = await getFailedTitles();
@@ -278,18 +279,25 @@ async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
   return titles.map((t) => ({ id: t.manga_id, lastFailure: formatEpoch(t.last_failure) }));
 }
 
+async function determineNonLatinTitles(userId: string): Promise<NonLatinTitleInfo[]> {
+  const titles: TitledMangaInfo[] | null = await getNonLatinTitles(userId);
+  if(!titles) { return []; }
+  return titles.map((t: TitledMangaInfo) => ({ id: t.manga_id, title: t.manga_title }));
+}
+
 async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitlesData> {
   try {
     if(!user) {
-      return { state: 'no-user', mangaIds: [] };
+      return { state: 'no-user', mangaIds: [], nonLatinTitles: [] };
     }
     const userId: string = user.userId;
     const failedTitles: FailedTitleInfo[] | undefined = await user.ifAdminP(determineFailedTitles);
     const mangaIds: string[] = await getUnknownTitles(userId, user.isAdmin) ?? [];
-    return { state: 'ok', mangaIds, failedTitles };
+    const nonLatinTitles: NonLatinTitleInfo[] = await determineNonLatinTitles(userId);
+    return { state: 'ok', mangaIds, failedTitles, nonLatinTitles };
   } catch (e) {
     console.error('Encountered error in unknown-titles request handler', e);
-    return { state: 'error', mangaIds: [] };
+    return { state: 'error', mangaIds: [], nonLatinTitles: [] };
   }
 }
 
