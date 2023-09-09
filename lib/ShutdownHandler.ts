@@ -1,5 +1,5 @@
 class ShutdownHandler {
-  private readonly _actions: Array<() => void> = [];
+  private readonly _actions: Array<() => Promise<void>> = [];
 
   constructor() {
     process.on('SIGINT', async () => {
@@ -9,9 +9,9 @@ class ShutdownHandler {
     });
   }
 
-  get actions(): Array<() => void> { return this._actions; }
+  get actions(): Array<() => Promise<void>> { return this._actions; }
 
-  do(action: (...args: any[]) => void, ...params: any[]) {
+  do(action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
     if(typeof action === 'function') {
       this.actions.push(async () => action(...params));
     }
@@ -24,7 +24,7 @@ class ShutdownHandler {
 
   exit(exitCode: number = 0) { return this.do(process.exit, exitCode); }
 
-  thenDo(action: (...args: any[]) => void, ...params: any[]) { return this.do(action, ...params); }
+  thenDo(action: (...args: any[]) => void | Promise<void>, ...params: any[]) { return this.do(action, ...params); }
 
   thenLog(logText: string) { return this.log(logText); }
 
