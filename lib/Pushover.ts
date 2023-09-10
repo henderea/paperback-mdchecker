@@ -1,13 +1,13 @@
 import type { Response } from 'got';
 import got from 'got';
 
-interface StandardResponse {
+declare interface StandardResponse {
   status: number;
 }
 
-export type ApiResult = boolean | 'api-unavailable';
+export declare type ApiResult = boolean | 'api-unavailable';
 
-export type MessagePriority = -2 | -1 | 0 | 1 | 2;
+export declare type MessagePriority = -2 | -1 | 0 | 1 | 2;
 
 class Message {
   private readonly _apiToken: string;

@@ -5,8 +5,6 @@ import { updateSchedule, titleUpdateSchedule, noStartStopLogs, pushoverAppToken 
 import schedule from 'node-schedule';
 import got from 'got';
 import entities = require('entities');
-import _map from 'lodash/map.js';
-import _difference from 'lodash/difference.js';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates } from 'lib/db';
 
@@ -169,7 +167,7 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return _map(mangaIds, (id) => ({ id, title: null }));
+    return mangaIds.map((id) => ({ id, title: null }));
   }
 }
 
@@ -184,8 +182,8 @@ async function queryTitles(): Promise<void> {
         console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
         await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
-          const fetchedIds: string[] = _map(mangas, 'id');
-          const missingIds: string[] = _difference(mangaIds, fetchedIds);
+          const fetchedIds: string[] = mangas.map((m) => m.id);
+          const missingIds: string[] = mangaIds.filter((m) => !fetchedIds.includes(m));
           const missingCount: number = missingIds.length;
           if(missingCount > 0) {
             console.log(`Failed title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);

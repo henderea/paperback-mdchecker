@@ -2,7 +2,7 @@ import type { BasicUserResult } from './db';
 import { listUsersBasic } from './db';
 
 export const roles = ['ADMIN'] as const;
-export type Role = typeof roles[number];
+export declare type Role = typeof roles[number];
 
 export class User {
   private readonly _userId: string;

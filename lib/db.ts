@@ -25,7 +25,7 @@ async function query<T extends QueryResultRow>(text: string, values: any[] = [],
 }
 
 async function aQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<QueryResult<T>> {
-  return await query(text, values, 'array');
+  return query(text, values, 'array');
 }
 
 export declare interface BasicUserResult {
@@ -134,17 +134,17 @@ export async function getLatestUpdate(): Promise<number> {
   return ensureInt(result.rows[0][0]);
 }
 
-export interface MangaInfo {
+export declare interface MangaInfo {
   id: string;
   title: string | null;
 }
 
-export interface TitledMangaInfo {
+export declare interface TitledMangaInfo {
   manga_id: string;
   manga_title: string;
 }
 
-export interface MangaUpdateInfo extends MangaInfo {
+export declare interface MangaUpdateInfo extends MangaInfo {
   lastUpdate: number;
 }
 
@@ -169,7 +169,7 @@ export async function updateCompletedUpdateCheck(startEpoch: number, endEpoch: n
   await query('update update_check set check_end_time = $2, update_count = $3 where check_start_time = $1', [startEpoch, endEpoch, count]);
 }
 
-export interface UserPushUpdateResult {
+export declare interface UserPushUpdateResult {
   count: number;
   user_id: string;
   pushover_token: string;
@@ -184,7 +184,7 @@ export async function listUserPushUpdates(epoch: number): Promise<UserPushUpdate
   return result.rows;
 }
 
-export interface UpdateCheckResult {
+export declare interface UpdateCheckResult {
   check_start_time: number;
   check_end_time: number | null;
   update_count: number;
@@ -214,7 +214,7 @@ export async function getNonLatinTitles(userId: string): Promise<TitledMangaInfo
   return result.rows;
 }
 
-export interface FailedTitle {
+export declare interface FailedTitle {
   manga_id: string;
   last_failure: number;
 }

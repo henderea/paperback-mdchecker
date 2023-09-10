@@ -111,20 +111,20 @@ app.get('/manga-check', async (req: Request, res: Response) => {
 /**
  * when the update check process failed
  */
-type UpdateCheckStateFailed = 'failed';
+declare type UpdateCheckStateFailed = 'failed';
 
 /**
  * when there were no series to check because nothing has been fetched in the past week.
  */
-type UpdateCheckStateNoSeries = 'no-series';
+declare type UpdateCheckStateNoSeries = 'no-series';
 
 /**
  * when the update check process ended with an unknown non-success response
  */
-type UpdateCheckStateUnknownResult = 'unknown-result';
+declare type UpdateCheckStateUnknownResult = 'unknown-result';
 
-type EndedUpdateCheckState = 'completed' | UpdateCheckStateFailed | UpdateCheckStateNoSeries | UpdateCheckStateUnknownResult;
-type UpdateCheckState = 'no-user' | 'unknown' | 'error' | 'running' | EndedUpdateCheckState;
+declare type EndedUpdateCheckState = 'completed' | UpdateCheckStateFailed | UpdateCheckStateNoSeries | UpdateCheckStateUnknownResult;
+declare type UpdateCheckState = 'no-user' | 'unknown' | 'error' | 'running' | EndedUpdateCheckState;
 
 function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
   return (data: Dictionary<any>) => {
@@ -149,31 +149,31 @@ function getUpdateCheckStateFromCount(count: number): EndedUpdateCheckState {
 /**
  * A US-formatted date/time string in Eastern Time
  */
-type TimeString = string;
+declare type TimeString = string;
 /**
  * A formatted duration string with ms, s, m, and h (leaving a unit out if it would be 0)
  */
-type DurationString = string;
+declare type DurationString = string;
 
-interface FormattedMangaUpdateInfo extends MangaInfo {
+declare interface FormattedMangaUpdateInfo extends MangaInfo {
   lastUpdateAgo: string;
 }
 
-type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: FormattedMangaUpdateInfo[] };
+declare type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: FormattedMangaUpdateInfo[] };
 
-type UpdateNoUser = { state: 'no-user' };
-type UpdateError = { state: 'error' };
+declare type UpdateNoUser = { state: 'no-user' };
+declare type UpdateError = { state: 'error' };
 
-type UpdateUnknownBase = { state: 'unknown' };
-type UpdateUnknown = UpdateUnknownBase | (UpdateUnknownBase & UserUpdateData);
+declare type UpdateUnknownBase = { state: 'unknown' };
+declare type UpdateUnknown = UpdateUnknownBase | (UpdateUnknownBase & UserUpdateData);
 
-type UpdateRunningBase = { state: 'running', start: TimeString };
-type UpdateRunning = UpdateRunningBase | (UpdateRunningBase & UserUpdateData);
+declare type UpdateRunningBase = { state: 'running', start: TimeString };
+declare type UpdateRunning = UpdateRunningBase | (UpdateRunningBase & UserUpdateData);
 
-type UpdateEndedBase = { state: EndedUpdateCheckState, start: TimeString, end: TimeString, duration: DurationString, count?: number };
-type UpdateEnded = UpdateEndedBase | (UpdateEndedBase & UserUpdateData);
+declare type UpdateEndedBase = { state: EndedUpdateCheckState, start: TimeString, end: TimeString, duration: DurationString, count?: number };
+declare type UpdateEnded = UpdateEndedBase | (UpdateEndedBase & UserUpdateData);
 
-type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | UpdateEnded;
+declare type UpdateData = UpdateNoUser | UpdateError | UpdateUnknown | UpdateRunning | UpdateEnded;
 
 
 function processMangaUpdateInfo(mangas: MangaUpdateInfo[]): FormattedMangaUpdateInfo[] {
@@ -266,10 +266,10 @@ app.get('/last-update-check.json', async (req: Request, res: Response) => {
   pjson(mapForJson(await getUserUpdateData(user)));
 });
 
-type UnknownTitlesState = 'no-user' | 'ok' | 'error';
-type FailedTitleInfo = { id: string, lastFailure: TimeString };
-type NonLatinTitleInfo = { id: string, title: string };
-type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] | undefined, nonLatinTitles: NonLatinTitleInfo[] };
+declare type UnknownTitlesState = 'no-user' | 'ok' | 'error';
+declare type FailedTitleInfo = { id: string, lastFailure: TimeString };
+declare type NonLatinTitleInfo = { id: string, title: string };
+declare type UnknownTitlesData = { state: UnknownTitlesState, mangaIds: string[], failedTitles?: FailedTitleInfo[] | undefined, nonLatinTitles: NonLatinTitleInfo[] };
 
 async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
   const titles: FailedTitle[] | null = await getFailedTitles();
