@@ -52,8 +52,8 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
     }
 
     const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
-    console.log(`status code: ${response.statusCode}`);
-    console.log('response:', json);
+    // console.log(`status code: ${response.statusCode}`);
+    // console.log('response:', json);
 
     if(json.data === undefined) {
       throw new Error(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
@@ -109,26 +109,26 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
 }
 
 async function queryUpdates(): Promise<void> {
-  console.log('Starting update');
+  // console.log('Starting update');
   const epoch: number = Date.now();
   try {
     await addUpdateCheck(epoch);
-    console.log('Added update check');
+    // console.log('Added update check');
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
-      console.log('No series');
+      // console.log('No series');
       await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
-    console.log(`Latest update: ${latestUpdate}`);
+    // console.log(`Latest update: ${latestUpdate}`);
     const updatedManga: string[] = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
-      console.log('No updates');
+      // console.log('No updates');
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
-    console.log('Updates found');
+    // console.log('Updates found');
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
     await sendUserUpdatesPush(epoch);
