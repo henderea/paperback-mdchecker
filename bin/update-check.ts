@@ -107,20 +107,26 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
 }
 
 async function queryUpdates(): Promise<void> {
+  console.log('Starting update');
   const epoch: number = Date.now();
   try {
     await addUpdateCheck(epoch);
+    console.log('Added update check');
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
+      console.log('No series');
       await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
+    console.log(`Latest update: ${latestUpdate}`);
     const updatedManga: string[] = await findUpdatedManga(mangaIds, latestUpdate);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
+      console.log('No updates');
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
+    console.log('Updates found');
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
     await sendUserUpdatesPush(epoch);
