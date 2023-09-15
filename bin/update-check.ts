@@ -52,6 +52,8 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
     }
 
     const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+    console.log(`status code: ${response.statusCode}`);
+    console.log('response:', json);
 
     if(json.data === undefined) {
       throw new Error(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
