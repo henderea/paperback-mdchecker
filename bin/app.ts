@@ -276,7 +276,7 @@ async function determineFailedTitles(): Promise<FailedTitleInfo[]> {
   if(!titles) {
     return [];
   }
-  return titles.map((t) => ({ id: t.manga_id, lastFailure: formatEpoch(t.last_failure) }));
+  return titles.map((t) => ({ id: t.manga_id, lastFailure: formatEpoch(ensureInt(t.last_failure)) }));
 }
 
 async function determineNonLatinTitles(userId: string): Promise<NonLatinTitleInfo[]> {
