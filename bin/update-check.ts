@@ -37,6 +37,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       .addQueryParameter('order', { 'publishAt': 'desc' })
       .addQueryParameter('translatedLanguage', ['en'])
       .addQueryParameter('includeFutureUpdates', '0')
+      .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
       .buildUrl();
 
     const response = await got(url, {
@@ -148,6 +149,7 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
       .addPathComponent('manga')
       .addQueryParameter('limit', PAGE_SIZE)
       .addQueryParameter('ids', mangaIds)
+      .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
       .buildUrl();
 
     const response = await got(url, {
