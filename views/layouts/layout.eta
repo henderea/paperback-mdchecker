@@ -1,9 +1,9 @@
 <html>
   <head>
-    <%_ ~ include('/partials/_head.eta', { ...it }) _%>
+    <%_ ~ include('/partials/_head.eta', { ...it }) %>
   </head>
   <body>
-    <%~ include('/partials/_header.eta', { ...it }) %>
-    <%~ it.body %>
+    <%~ include('/partials/_header.eta', { ...it }) -%>
+    <%~ it.body _%>
   </body>
 </html>
