@@ -38,8 +38,8 @@ const app: Application = express();
 const viewPath = path.join(process.cwd(), 'views');
 
 const eta = new Eta({ views: viewPath, cache: true });
-app.engine('eta', (path: string, options: object, callback: (e: any, rendered?: string) => void) => {
-  eta.renderAsync(path, options).then((res) => callback(null, res)).catch((e) => callback(e));
+app.engine('eta', (filePath: string, options: object, callback: (e: any, rendered?: string) => void) => {
+  eta.renderAsync(path.relative(viewPath, filePath), options).then((res) => callback(null, res)).catch((e) => callback(e));
 });
 app.set('view engine', 'eta');
 
