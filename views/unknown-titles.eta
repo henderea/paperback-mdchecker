@@ -1,8 +1,5 @@
-<% layout('layouts/layout') %>
+<% layout('layouts/layout', { title: 'Unknown Titles' }) %>
 <html>
-  <head>
-    <title>Unknown Titles</title>
-  </head>
   <body>
     <table class="mainTable">
       <tbody>

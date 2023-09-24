@@ -1,8 +1,5 @@
-<% layout('layouts/layout') %>
+<% layout('layouts/layout', { title: 'Update Check' }) %>
 <html>
-  <head>
-    <title>Update Check</title>
-  </head>
   <body>
     <table class="mainTable">
       <tbody>

@@ -1,10 +1,9 @@
 <html>
   <head>
-    <link rel="stylesheet" href="/generated/css/<%= it.templateName %>.css"/>
-    <script type="text/javascript" src="/generated/js/<%= it.templateName %>.js"></script>
+    <%~ include('/partials/_head.eta', { ...it }) %>
   </head>
   <body>
-    <input type="hidden" id="lastLoad" value="<%= Date.now() %>"/>
+    <%~ include('/partials/_header.eta', { ...it }) %>
     <%~ it.body %>
   </body>
 </html>
