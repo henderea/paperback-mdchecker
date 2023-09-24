@@ -1,9 +1,9 @@
 <html>
   <head>
-    <% include('./head.ejs', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
+    <% include('head.ejs', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
   </head>
   <body>
-    <% include('./head.ejs') %>
+    <% include('header.ejs') %>
     <table class="mainTable">
       <tbody>
         <% if(data.state == 'ok') { %>
