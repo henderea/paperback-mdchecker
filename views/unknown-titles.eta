@@ -3,7 +3,7 @@
     <%~ include('partials/_head', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
   </head>
   <body>
-    <%~ include('partials/_header') %>
+    <%~ include('partials/_header', {}) %>
     <table class="mainTable">
       <tbody>
         <% if(it.state == 'ok') { %>
