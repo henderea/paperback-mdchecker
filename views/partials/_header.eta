@@ -1,1 +1,1 @@
-<input type="hidden" id="lastLoad" value="<%= Date.now() %>"/><%_ _%>
+<input type="hidden" id="lastLoad" value="<%= Date.now() %>"/>
