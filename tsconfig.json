@@ -27,7 +27,7 @@
       "./ts-types"
     ],
     "allowSyntheticDefaultImports": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "removeComments": true

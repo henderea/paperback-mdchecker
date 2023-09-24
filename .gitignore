@@ -4,4 +4,4 @@ processes.json
 ecosystem.config.js
 yarn-error.log
 build
-public/css/generated
+public/generated
