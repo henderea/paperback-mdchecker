@@ -257,7 +257,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = (data: UpdateData) => { res.render('update-check', { data }); };
+  const render = (data: UpdateData) => { res.render('update-check', data); };
   const user: User | undefined = req.user;
   render(await getUserUpdateData(user));
 });
@@ -312,7 +312,7 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
 }
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: UnknownTitlesData) => { res.render('unknown-titles',  { data } ); };
+  const render = (data: UnknownTitlesData) => { res.render('unknown-titles', data); };
   const user: User | undefined = req.user;
   render(await getUnknownTitlesData(user));
 });
