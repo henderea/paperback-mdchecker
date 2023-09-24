@@ -1,9 +1,9 @@
+<% layout('layouts/layout') %>
 <html>
   <head>
-    <%~ include('partials/_head', { ...it, title: 'Unknown Titles' }) %>
+    <title>Unknown Titles</title>
   </head>
   <body>
-    <%~ include('partials/_header', { ...it }) %>
     <table class="mainTable">
       <tbody>
         <% if(it.state == 'ok') { %>

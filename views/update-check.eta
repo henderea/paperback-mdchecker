@@ -1,9 +1,9 @@
+<% layout('layouts/layout') %>
 <html>
   <head>
-    <%~ include('partials/_head', { ...it, title: 'Update Check' }) %>
+    <title>Update Check</title>
   </head>
   <body>
-    <%~ include('partials/_header', { ...it }) %>
     <table class="mainTable">
       <tbody>
         <tr>

@@ -1,0 +1,12 @@
+<html>
+  <head>
+    <title><%= it.title %></title>
+    <link rel="stylesheet" href="/generated/css/<%= it.templateName %>.css"/>
+    <script type="text/javascript" src="/generated/js/<%= it.templateName %>.js"></script>
+  </head>
+  <body>
+    <%= it.title %>
+    <input type="hidden" id="lastLoad" value="<%= Date.now() %>"/>
+    <%~ it.body %>
+  </body>
+</html>
