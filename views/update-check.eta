@@ -45,12 +45,12 @@
               <% if(it.updatesSinceLastFetch.length > 0) { %>
                 <table class="userUpdatesTable">
                   <tbody>
-                    <%_ it.updatesSinceLastFetch.forEach((m) => { %>
+                    <%_ it.updatesSinceLastFetch.forEach((m) => { _%>
                       <tr>
                         <td class="time-ago">(<%= m.lastUpdateAgo %> ago)</td>
                         <td class="link-cell"><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></td>
                       </tr>
-                    <%_ }); %>
+                    <%_ }); _%>
                   </tbody>
                 </table>
               <% } %>
