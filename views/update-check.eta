@@ -7,37 +7,37 @@
           <th>State</th>
           <td class="state <%= it.state %>"><%= it.state %></td>
         </tr>
-        <% if(it.start) { %>
+        <%_ if(it.start) { _%>
           <tr>
             <th>Start</th>
             <td><%= it.start %></td>
           </tr>
-        <% } %>
-        <% if(it.end) { %>
+        <%_ } _%>
+        <%_ if(it.end) { _%>
           <tr>
             <th>End</th>
             <td><%= it.end %></td>
           </tr>
-        <% } %>
-        <% if(it.duration) { %>
+        <%_ } _%>
+        <%_ if(it.duration) { _%>
           <tr>
             <th>Duration</th>
             <td><%= it.duration %></td>
           </tr>
-        <% } %>
-        <% if(it.count !== undefined) { %>
+        <%_ } _%>
+        <%_ if(it.count !== undefined) { _%>
           <tr>
             <th>Count</th>
             <td><%= it.count %></td>
           </tr>
-        <% } %>
-        <% if(it.lastUserFetch) { %>
+        <%_ } _%>
+        <%_ if(it.lastUserFetch) { _%>
           <tr>
             <th>Last User Fetch</th>
             <td><%= it.lastUserFetch %></td>
           </tr>
-        <% } %>
-        <% if(it.updatesSinceLastFetch && Array.isArray(it.updatesSinceLastFetch)) { %>
+        <%_ } _%>
+        <%_ if(it.updatesSinceLastFetch && Array.isArray(it.updatesSinceLastFetch)) { _%>
           <tr>
             <th>Updates Since Last Fetch</th>
             <td>
@@ -53,10 +53,10 @@
                     <%_ }); _%>
                   </tbody>
                 </table>
-              <% } %>
+              <%_ } _%>
             </td>
           </tr>
-        <% } %>
+        <%_ } _%>
       </tbody>
     </table>
   </body>
