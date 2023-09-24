@@ -1,6 +1,6 @@
 <html>
   <head>
-    <%~ include('partials/_head', { ...it, title: 'Update Check', name: 'update-check' }) %>
+    <%~ include('partials/_head', { ...it, title: 'Update Check' }) %>
   </head>
   <body>
     <%~ include('partials/_header', { ...it }) %>

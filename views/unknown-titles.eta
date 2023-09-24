@@ -1,6 +1,6 @@
 <html>
   <head>
-    <%~ include('partials/_head', { ...it, title: 'Unknown Titles', name: 'unknown-titles' }) %>
+    <%~ include('partials/_head', { ...it, title: 'Unknown Titles' }) %>
   </head>
   <body>
     <%~ include('partials/_header', { ...it }) %>

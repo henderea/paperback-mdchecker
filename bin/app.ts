@@ -39,10 +39,11 @@ const viewPath = path.join(process.cwd(), 'views');
 
 const eta = new Eta({ views: viewPath, cache: true });
 app.engine('eta', (filePath: string, options: Dictionary<any>, callback: (e: any, rendered?: string) => void) => {
-  const templatePath: string = path.relative(viewPath, filePath);
-  const templateName: string = templatePath.replace(/.eta$/, '');
-  const data: Dictionary<any> = { ...options, templateName };
-  eta.renderAsync(templatePath, data).then((res) => callback(null, res)).catch((e) => callback(e));
+  const templateFilePath: string = path.relative(viewPath, filePath);
+  const templatePath: string = templateFilePath.replace(/.eta$/, '');
+  const templateName: string = path.basename(templateFilePath).replace(/.eta$/, '');
+  const data: Dictionary<any> = { ...options, templatePath, templateName };
+  eta.renderAsync(templateFilePath, data).then((res) => callback(null, res)).catch((e) => callback(e));
 });
 app.set('view engine', 'eta');
 
