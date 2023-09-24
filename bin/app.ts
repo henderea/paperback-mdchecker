@@ -37,7 +37,7 @@ const app: Application = express();
 
 const viewPath = path.join(process.cwd(), 'views');
 
-const eta = new Eta({ views: viewPath, cache: true });
+const eta = new Eta({ views: viewPath, cache: true, rmWhitespace: true });
 app.engine('eta', (filePath: string, options: Dictionary<any>, callback: (e: any, rendered?: string) => void) => {
   const templateFilePath: string = path.relative(viewPath, filePath);
   const templatePath: string = templateFilePath.replace(/.eta$/, '');

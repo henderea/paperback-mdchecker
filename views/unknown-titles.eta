@@ -1,49 +1,49 @@
 <% layout('layouts/layout', { title: 'Unknown Titles' }) %>
 <table class="mainTable">
   <tbody>
-    <% if(it.state == 'ok') { _%>
-    <% if(it.mangaIds.length > 0) { _%>
-    <% it.mangaIds.forEach((m) => { _%>
-    <tr>
-      <th>Unknown:</th>
-      <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
-    </tr>
-    <% }); %>
-    <%_ } else { _%>
-    <tr>
-      <td colspan="2" class="ok">No Unknown Titles</td>
-    </tr>
-    <%_ } %>
-    <tr>
-      <td colspan="2">&nbsp;</td>
-    </tr>
-    <% if(it.nonLatinTitles.length > 0) { _%>
-    <% it.nonLatinTitles.forEach((m) => { _%>
-    <tr>
-      <th>Non-Latin:</th>
-      <td><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title %></a></td>
-    </tr>
-    <% }); %>
-    <%_ } else { _%>
-    <tr>
-      <td colspan="2" class="ok">No Non-Latin Titles</td>
-    </tr>
-    <%_ } %>
-    <% if(it.failedTitles && it.failedTitles.length > 0) { _%>
-    <tr>
-      <td colspan="2">&nbsp;</td>
-    </tr>
-    <% it.failedTitles.forEach((t) => { _%>
-    <tr>
-      <th>Failed:</th>
-      <td><%= t.id %> (<%= t.lastFailure %>; <a href="https://mangadex.org/title/<%= t.id %>" target="_blank">GO</a>)</td>
-    </tr>
-    <% }); %>
-    <%_ } %>
-    <%_ } else { _%>
-    <tr>
-      <td class="error"><%= it.state %></td>
-    </tr>
-    <%_ } %>
+    <% if(it.state == 'ok') { %>
+      <% if(it.mangaIds.length > 0) { %>
+        <% it.mangaIds.forEach((m) => { %>
+          <tr>
+            <th>Unknown:</th>
+            <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
+          </tr>
+        <% }); %>
+      <% } else { %>
+        <tr>
+          <td colspan="2" class="ok">No Unknown Titles</td>
+        </tr>
+      <% } %>
+      <tr>
+        <td colspan="2">&nbsp;</td>
+      </tr>
+      <% if(it.nonLatinTitles.length > 0) { %>
+        <% it.nonLatinTitles.forEach((m) => { %>
+          <tr>
+            <th>Non-Latin:</th>
+            <td><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title %></a></td>
+          </tr>
+        <% }); %>
+      <% } else { %>
+        <tr>
+          <td colspan="2" class="ok">No Non-Latin Titles</td>
+        </tr>
+      <% } %>
+      <% if(it.failedTitles && it.failedTitles.length > 0) { %>
+        <tr>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+        <% it.failedTitles.forEach((t) => { %>
+          <tr>
+            <th>Failed:</th>
+            <td><%= t.id %> (<%= t.lastFailure %>; <a href="https://mangadex.org/title/<%= t.id %>" target="_blank">GO</a>)</td>
+          </tr>
+        <% }); %>
+      <% } %>
+    <% } else { %>
+      <tr>
+        <td class="error"><%= it.state %></td>
+      </tr>
+    <% } %>
   </tbody>
 </table>
