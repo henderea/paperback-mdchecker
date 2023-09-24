@@ -38,8 +38,11 @@ const app: Application = express();
 const viewPath = path.join(process.cwd(), 'views');
 
 const eta = new Eta({ views: viewPath, cache: true });
-app.engine('eta', (filePath: string, options: object, callback: (e: any, rendered?: string) => void) => {
-  eta.renderAsync(path.relative(viewPath, filePath), options).then((res) => callback(null, res)).catch((e) => callback(e));
+app.engine('eta', (filePath: string, options: Dictionary<any>, callback: (e: any, rendered?: string) => void) => {
+  const templatePath: string = path.relative(viewPath, filePath);
+  const templateName: string = templatePath.replace(/.eta$/, '');
+  const data: Dictionary<any> = { ...options, templateName };
+  eta.renderAsync(templatePath, data).then((res) => callback(null, res)).catch((e) => callback(e));
 });
 app.set('view engine', 'eta');
 
