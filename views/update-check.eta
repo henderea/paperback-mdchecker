@@ -7,56 +7,55 @@
           <th>State</th>
           <td class="state <%= it.state %>"><%= it.state %></td>
         </tr>
-        <%_ if(it.start) { _%>
+        <% if(it.start) { %>
           <tr>
             <th>Start</th>
             <td><%= it.start %></td>
           </tr>
-        <%_ } _%>
-        <%_ if(it.end) { _%>
+        <% } %>
+        <% if(it.end) { %>
           <tr>
             <th>End</th>
             <td><%= it.end %></td>
           </tr>
-        <%_ } _%>
-        <%_ if(it.duration) { _%>
+        <% } %>
+        <% if(it.duration) { %>
           <tr>
             <th>Duration</th>
             <td><%= it.duration %></td>
           </tr>
-        <%_ } _%>
-        <%_ if(it.count !== undefined) { _%>
+        <% } %>
+        <% if(it.count !== undefined) { %>
           <tr>
             <th>Count</th>
             <td><%= it.count %></td>
           </tr>
-        <%_ } _%>
-        <%_ if(it.lastUserFetch) { _%>
+        <% } %>
+        <% if(it.lastUserFetch) { %>
           <tr>
             <th>Last User Fetch</th>
             <td><%= it.lastUserFetch %></td>
           </tr>
-        <%_ } _%>
-        <%_ if(it.updatesSinceLastFetch && Array.isArray(it.updatesSinceLastFetch)) { _%>
+        <% } %>
+        <% if(it.updatesSinceLastFetch && Array.isArray(it.updatesSinceLastFetch)) { %>
           <tr>
             <th>Updates Since Last Fetch</th>
             <td>
               <b>Count:</b> <%= it.updatesSinceLastFetch.length %><br>
-              <%_ if(it.updatesSinceLastFetch.length > 0) { _%>
+              <% if(it.updatesSinceLastFetch.length > 0) { %>
                 <table class="userUpdatesTable">
                   <tbody>
-                    <%_ it.updatesSinceLastFetch.forEach((m) => { _%>
+                    <% it.updatesSinceLastFetch.forEach((m) => { %>
                       <tr>
                         <td class="time-ago">(<%= m.lastUpdateAgo %> ago)</td>
                         <td class="link-cell"><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></td>
-                      </tr>
-                    <%_ }); _%>
+                      </tr><% }); %>
                   </tbody>
                 </table>
-              <%_ } _%>
+              <% } %>
             </td>
           </tr>
-        <%_ } _%>
+        <% } %>
       </tbody>
     </table>
   </body>
