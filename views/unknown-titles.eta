@@ -8,12 +8,12 @@
       <th>Unknown:</th>
       <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
     </tr>
-    <% }); %>
+    <%_ }); %>
     <% } else { _%>
     <tr>
       <td colspan="2" class="ok">No Unknown Titles</td>
     </tr>
-    <% } %>
+    <%_ } %>
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
@@ -23,12 +23,12 @@
       <th>Non-Latin:</th>
       <td><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title %></a></td>
     </tr>
-    <% }); %>
-    <% } else { _%>
+    <%_ }); %>
+    <%_ } else { _%>
     <tr>
       <td colspan="2" class="ok">No Non-Latin Titles</td>
     </tr>
-    <% } %>
+    <%_ } %>
     <% if(it.failedTitles && it.failedTitles.length > 0) { _%>
     <tr>
       <td colspan="2">&nbsp;</td>
@@ -38,12 +38,12 @@
       <th>Failed:</th>
       <td><%= t.id %> (<%= t.lastFailure %>; <a href="https://mangadex.org/title/<%= t.id %>" target="_blank">GO</a>)</td>
     </tr>
-    <% }); %>
-    <% } %>
-    <% } else { _%>
+    <%_ }); %>
+    <%_ } %>
+    <%_ } else { _%>
     <tr>
       <td class="error"><%= it.state %></td>
     </tr>
-    <% } %>
+    <%_ } %>
   </tbody>
 </table>
