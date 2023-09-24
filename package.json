@@ -21,6 +21,7 @@
   "dependencies": {
     "ejs": "^3.1.9",
     "entities": "^4.5.0",
+    "eta": "^3.1.1",
     "express": "^4.18.2",
     "got": "12.6.1",
     "http-terminator": "^3.2.0",

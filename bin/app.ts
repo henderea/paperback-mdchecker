@@ -6,9 +6,12 @@ import type { UpdateCheckResult, MangaInfo, TitledMangaInfo, MangaUpdateInfo, Fa
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
+import path from 'path';
+
 import schedule from 'node-schedule';
 
 import express from 'express';
+import { Eta } from 'eta';
 import { createHttpTerminator } from 'http-terminator';
 
 
@@ -31,7 +34,14 @@ declare global {
 
 const app: Application = express();
 
-app.set('view engine', 'ejs');
+
+const viewPath = path.join(process.cwd(), 'views');
+
+const eta = new Eta({ views: viewPath, cache: true });
+app.engine('eta', (path: string, options: object, callback: (e: any, rendered?: string) => void) => {
+  eta.renderAsync(path, options).then((res) => callback(null, res)).catch((e) => callback(e));
+});
+app.set('view engine', 'eta');
 
 app.use(express.static('public', { index: false }));
 

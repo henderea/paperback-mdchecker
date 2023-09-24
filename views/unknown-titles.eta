@@ -1,14 +1,14 @@
 <html>
   <head>
-    <%- include('partials/_head.ejs', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
+    <%~ include('partials/_head', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
   </head>
   <body>
-    <%- include('partials/_header.ejs') %>
+    <%~ include('partials/_header') %>
     <table class="mainTable">
       <tbody>
-        <% if(data.state == 'ok') { %>
-          <% if(data.mangaIds.length > 0) { %>
-            <% data.mangaIds.forEach((m) => { %>
+        <% if(it.state == 'ok') { %>
+          <% if(it.mangaIds.length > 0) { %>
+            <% it.mangaIds.forEach((m) => { %>
             <tr>
               <th>Unknown:</th>
               <td><%= m %> (<a href="https://mangadex.org/title/<%= m %>" target="_blank">GO</a>)</td>
@@ -22,8 +22,8 @@
           <tr>
             <td colspan="2">&nbsp;</td>
           </tr>
-          <% if(data.nonLatinTitles.length > 0) { %>
-            <% data.nonLatinTitles.forEach((m) => { %>
+          <% if(it.nonLatinTitles.length > 0) { %>
+            <% it.nonLatinTitles.forEach((m) => { %>
             <tr>
               <th>Non-Latin:</th>
               <td><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title %></a></td>
@@ -34,11 +34,11 @@
               <td colspan="2" class="ok">No Non-Latin Titles</td>
             </tr>
           <% } %>
-          <% if(data.failedTitles && data.failedTitles.length > 0) { %>
+          <% if(it.failedTitles && it.failedTitles.length > 0) { %>
             <tr>
               <td colspan="2">&nbsp;</td>
             </tr>
-            <% data.failedTitles.forEach((t) => { %>
+            <% it.failedTitles.forEach((t) => { %>
               <tr>
                 <th>Failed:</th>
                 <td><%= t.id %> (<%= t.lastFailure %>; <a href="https://mangadex.org/title/<%= t.id %>" target="_blank">GO</a>)</td>
@@ -47,7 +47,7 @@
           <% } %>
         <% } else { %>
           <tr>
-            <td class="error"><%= data.state %></td>
+            <td class="error"><%= it.state %></td>
           </tr>
         <% } %>
       </tbody>

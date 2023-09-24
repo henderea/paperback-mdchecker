@@ -1,54 +1,54 @@
 <html>
   <head>
-    <%- include('partials/_head.ejs', { title: 'Update Check', name: 'update-check' }) %>
+    <%~ include('partials/_head', { title: 'Update Check', name: 'update-check' }) %>
   </head>
   <body>
-    <%- include('partials/_header.ejs') %>
+    <%~ include('partials/_header') %>
     <table class="mainTable">
       <tbody>
         <tr>
           <th>State</th>
-          <td class="state <%= data.state %>"><%= data.state %></td>
+          <td class="state <%= it.state %>"><%= it.state %></td>
         </tr>
-        <% if(data.start) { %>
+        <% if(it.start) { %>
           <tr>
             <th>Start</th>
-            <td><%= data.start %></td>
+            <td><%= it.start %></td>
           </tr>
         <% } %>
-        <% if(data.end) { %>
+        <% if(it.end) { %>
           <tr>
             <th>End</th>
-            <td><%= data.end %></td>
+            <td><%= it.end %></td>
           </tr>
         <% } %>
-        <% if(data.duration) { %>
+        <% if(it.duration) { %>
           <tr>
             <th>Duration</th>
-            <td><%= data.duration %></td>
+            <td><%= it.duration %></td>
           </tr>
         <% } %>
-        <% if(data.count !== undefined) { %>
+        <% if(it.count !== undefined) { %>
           <tr>
             <th>Count</th>
-            <td><%= data.count %></td>
+            <td><%= it.count %></td>
           </tr>
         <% } %>
-        <% if(data.lastUserFetch) { %>
+        <% if(it.lastUserFetch) { %>
           <tr>
             <th>Last User Fetch</th>
-            <td><%= data.lastUserFetch %></td>
+            <td><%= it.lastUserFetch %></td>
           </tr>
         <% } %>
-        <% if(data.updatesSinceLastFetch && Array.isArray(data.updatesSinceLastFetch)) { %>
+        <% if(it.updatesSinceLastFetch && Array.isArray(it.updatesSinceLastFetch)) { %>
           <tr>
             <th>Updates Since Last Fetch</th>
             <td>
-              <b>Count:</b> <%= data.updatesSinceLastFetch.length %><br>
-              <% if(data.updatesSinceLastFetch.length > 0) { %>
+              <b>Count:</b> <%= it.updatesSinceLastFetch.length %><br>
+              <% if(it.updatesSinceLastFetch.length > 0) { %>
                 <table class="userUpdatesTable">
                   <tbody>
-                    <% data.updatesSinceLastFetch.forEach((m) => { %>
+                    <% it.updatesSinceLastFetch.forEach((m) => { %>
                       <tr>
                         <td class="time-ago">(<%= m.lastUpdateAgo %> ago)</td>
                         <td class="link-cell"><a href="https://mangadex.org/title/<%= m.id %>" target="_blank"><%= m.title || m.id %></a></td>
