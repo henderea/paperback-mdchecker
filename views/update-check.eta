@@ -1,9 +1,9 @@
 <html>
   <head>
-    <%~ include('partials/_head', { title: 'Update Check', name: 'update-check' }) %>
+    <%~ include('partials/_head', { ...it, title: 'Update Check', name: 'update-check' }) %>
   </head>
   <body>
-    <%~ include('partials/_header', {}) %>
+    <%~ include('partials/_header', { ...it }) %>
     <table class="mainTable">
       <tbody>
         <tr>

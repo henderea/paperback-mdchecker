@@ -1,9 +1,9 @@
 <html>
   <head>
-    <%~ include('partials/_head', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
+    <%~ include('partials/_head', { ...it, title: 'Unknown Titles', name: 'unknown-titles' }) %>
   </head>
   <body>
-    <%~ include('partials/_header', {}) %>
+    <%~ include('partials/_header', { ...it }) %>
     <table class="mainTable">
       <tbody>
         <% if(it.state == 'ok') { %>
