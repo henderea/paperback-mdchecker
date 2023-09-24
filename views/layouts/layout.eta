@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title><%= it.title %></title>
+    <%~ it.head %>
     <link rel="stylesheet" href="/generated/css/<%= it.templateName %>.css"/>
     <script type="text/javascript" src="/generated/js/<%= it.templateName %>.js"></script>
   </head>
