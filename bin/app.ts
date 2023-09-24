@@ -247,7 +247,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = (data: UpdateData) => { res.render('update-check', { data, lastLoad: Date.now() }); };
+  const render = (data: UpdateData) => { res.render('update-check', { data }); };
   const user: User | undefined = req.user;
   render(await getUserUpdateData(user));
 });

@@ -1,10 +1,9 @@
 <html>
   <head>
-    <title>Unknown Titles</title>
-    <link rel="stylesheet" href="/generated/css/unknown-titles.css"/>
-    <script type="text/javascript" src="/generated/js/unknown-titles.js"></script>
+    <% include('./head.ejs', { title: 'Unknown Titles', name: 'unknown-titles' }) %>
   </head>
   <body>
+    <% include('./head.ejs') %>
     <table class="mainTable">
       <tbody>
         <% if(data.state == 'ok') { %>
