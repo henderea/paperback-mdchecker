@@ -1,6 +1,6 @@
 <html>
   <head>
-    <%~ include('/partials/_head.eta', { ...it }) %>
+    <%_ ~ include('/partials/_head.eta', { ...it }) _%>
   </head>
   <body>
     <%~ include('/partials/_header.eta', { ...it }) %>
