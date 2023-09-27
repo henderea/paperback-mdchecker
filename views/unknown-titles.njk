@@ -1,0 +1,49 @@
+{% set title = 'Unknown Titles' %}
+{% set resourceName = 'unknown-titles' %}
+{% extends 'layouts/layout.njk' %}
+{% block body %}
+<table class="mainTable">
+  <tbody>
+    {% if state == 'ok' %}
+      {% for mangaId in mangaIds %}
+        <tr>
+          <th>Unknown:</th>
+          <td>{{ mangaId }} (<a href="https://mangadex.org/title/{{ mangaId }}" target="_blank">GO</a>)</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="2" class="ok">No Unknown Titles</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="2">&nbsp;</td>
+      </tr>
+      {% for manga in nonLatinTitles %}
+        <tr>
+          <th>Non-Latin:</th>
+          <td><a href="https://mangadex.org/title/{{ manga.id }}" target="_blank">{{ manga.title }}</a></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="2" class="ok">No Non-Latin Titles</td>
+        </tr>
+      {% endfor %}
+      {% if failedTitles and failedTitles | length > 0 %}
+        <tr>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+        {% for failedTitle in failedTitles %}
+          <tr>
+            <th>Failed:</th>
+            <td>{{ failedTitle.id }} ({{ failedTitle.lastFailure }}; <a href="https://mangadex.org/title/{{ failedTitleid }}" target="_blank">GO</a>)</td>
+          </tr>
+        {% endfor %}
+      {% endif %}
+    {% else %}
+      <tr>
+        <td class="error">{{ state }}</td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>
+{% endblock %}

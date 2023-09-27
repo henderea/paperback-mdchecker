@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>{{ title | default('Paperback MD Checker', true) }}</title>
+    {% if resourceName %}
+    <link rel="stylesheet" href="/generated/css/{{ resourceName }}.css"/>
+    <script type="text/javascript" src="/generated/js/{{ resourceName }}.js"></script>
+    {% endif %}
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <input type="hidden" id="lastLoad" value="{{ now() }}"/>
+    {% block body %}{% endblock %}
+  </body>
+</html>

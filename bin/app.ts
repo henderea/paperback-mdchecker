@@ -6,12 +6,11 @@ import type { UpdateCheckResult, MangaInfo, TitledMangaInfo, MangaUpdateInfo, Fa
 
 import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
 
-import path from 'path';
-
 import schedule from 'node-schedule';
 
 import express from 'express';
-import { Eta } from 'eta';
+import nunjucks from 'nunjucks';
+import { minify } from 'html-minifier';
 import { createHttpTerminator } from 'http-terminator';
 
 
@@ -29,23 +28,18 @@ declare global {
       userId: string | undefined;
       user: User | undefined;
     }
+    interface Response {
+      renderMinified(view: string, options?: object): void;
+    }
   }
 }
 
 const app: Application = express();
 
-
-const viewPath = path.join(process.cwd(), 'views');
-
-const eta = new Eta({ views: viewPath, cache: true, rmWhitespace: true });
-app.engine('eta', (filePath: string, options: Dictionary<any>, callback: (e: any, rendered?: string) => void) => {
-  const templateFilePath: string = path.relative(viewPath, filePath);
-  const templatePath: string = templateFilePath.replace(/.eta$/, '');
-  const templateName: string = path.basename(templateFilePath).replace(/.eta$/, '');
-  const data: Dictionary<any> = { ...options, templatePath, templateName };
-  eta.renderAsync(templateFilePath, data).then((res) => callback(null, res)).catch((e) => callback(e));
-});
-app.set('view engine', 'eta');
+nunjucks.configure('views', {
+  autoescape: true,
+  express: app
+}).addGlobal('now', () => Date.now());
 
 app.use(express.static('public', { index: false }));
 
@@ -54,6 +48,17 @@ const users: UserList = new UserList();
 schedule.scheduleJob(userUpdateSchedule, () => users.update());
 
 users.update();
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.renderMinified = function(view: string, options?: object): void {
+    this.render(view, options, function(err: Error, html: string) {
+      if(err) { throw err; }
+      html = minify(html, { collapseWhitespace: true, preserveLineBreaks: true });
+      res.send(html);
+    });
+  };
+  next();
+});
 
 function getUser(userId: string | null | undefined): User | undefined {
   return users.getUser(userId);
@@ -261,7 +266,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = (data: UpdateData) => { res.render('update-check', data); };
+  const render = (data: UpdateData) => { res.renderMinified('update-check.njk', data); };
   const user: User | undefined = req.user;
   render(await getUserUpdateData(user));
 });
@@ -316,7 +321,7 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
 }
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: UnknownTitlesData) => { res.render('unknown-titles', data); };
+  const render = (data: UnknownTitlesData) => { res.renderMinified('unknown-titles.njk', data); };
   const user: User | undefined = req.user;
   render(await getUnknownTitlesData(user));
 });
