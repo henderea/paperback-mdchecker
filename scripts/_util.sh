@@ -28,4 +28,5 @@ _run() {
 }
 
 # export EXCLUDES=('-e' 'dotenv' '-e' 'express' '-e' 'got' '-e' 'http-terminator' '-e' 'node-schedule' '-e' 'pg')
-export EXCLUDES=('-e' 'html-minifier')
+# export EXCLUDES=('-e' 'html-minifier')
+export EXCLUDES=()
