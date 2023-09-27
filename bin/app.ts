@@ -10,7 +10,7 @@ import schedule from 'node-schedule';
 
 import express from 'express';
 import nunjucks from 'nunjucks';
-import { minify } from 'html-minifier';
+import { minify } from 'html-minifier-terser';
 import { createHttpTerminator } from 'http-terminator';
 
 
@@ -29,7 +29,7 @@ declare global {
       user: User | undefined;
     }
     interface Response {
-      renderMinified(view: string, options?: object): void;
+      renderMinified(view: string, options?: object): Promise<void>;
     }
   }
 }
@@ -50,11 +50,15 @@ schedule.scheduleJob(userUpdateSchedule, () => users.update());
 users.update();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  res.renderMinified = function(view: string, options?: object): void {
-    this.render(view, options, function(err: Error, html: string) {
-      if(err) { throw err; }
-      html = minify(html, { collapseWhitespace: true, preserveLineBreaks: true });
-      res.send(html);
+  res.renderMinified = function(view: string, options?: object): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.render(view, options, function(err: Error, html: string) {
+        if(err) { return reject(err); }
+        minify(html, { collapseWhitespace: true, preserveLineBreaks: true }).then((minified) => {
+          res.send(minified);
+          resolve();
+        });
+      });
     });
   };
   next();
@@ -266,9 +270,9 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = (data: UpdateData) => { res.renderMinified('update-check.njk', data); };
+  const render = async (data: UpdateData) => res.renderMinified('update-check.njk', data);
   const user: User | undefined = req.user;
-  render(await getUserUpdateData(user));
+  await render(await getUserUpdateData(user));
 });
 
 function mapForJson(data: UpdateData): Dictionary<any> {
@@ -321,9 +325,9 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
 }
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = (data: UnknownTitlesData) => { res.renderMinified('unknown-titles.njk', data); };
+  const render = async (data: UnknownTitlesData) => res.renderMinified('unknown-titles.njk', data);
   const user: User | undefined = req.user;
-  render(await getUnknownTitlesData(user));
+  await render(await getUnknownTitlesData(user));
 });
 
 function startServerListen(): Server {
