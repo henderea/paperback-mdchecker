@@ -36,10 +36,21 @@ declare global {
 
 const app: Application = express();
 
+function isEmpty(value: string | any[] | null | undefined): boolean {
+  return value === null || value === undefined || !value.length || value.length == 0;
+}
+
 nunjucks.configure('views', {
   autoescape: true,
   express: app
-}).addGlobal('now', () => Date.now());
+})
+  .addGlobal('now', () => Date.now())
+  .addFilter('notEmpty', function(value: string | any[] | null | undefined): boolean {
+    return !isEmpty(value);
+  })
+  .addFilter('isEmpty', function(value: string | any[] | null | undefined): boolean {
+    return isEmpty(value);
+  });
 
 app.use(express.static('public', { index: false }));
 

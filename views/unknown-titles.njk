@@ -28,7 +28,7 @@
           <td colspan="2" class="ok">No Non-Latin Titles</td>
         </tr>
       {% endfor %}
-      {% if failedTitles and failedTitles | length > 0 %}
+      {% if failedTitles | notEmpty %}
         <tr>
           <td colspan="2">&nbsp;</td>
         </tr>

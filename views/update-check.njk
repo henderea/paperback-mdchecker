@@ -43,7 +43,7 @@
         <th>Updates Since Last Fetch</th>
         <td>
           <b>Count:</b> {{ updatesSinceLastFetch | length }}<br>
-          {% if updatesSinceLastFetch | length > 0 %}
+          {% if updatesSinceLastFetch | notEmpty %}
             <table class="userUpdatesTable">
               <tbody>
                 {% for manga in updatesSinceLastFetch %}
