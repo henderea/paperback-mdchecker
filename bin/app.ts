@@ -88,26 +88,28 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 declare type State = 'unknown' | 'updated' | 'current' | 'no-user' | 'error';
 
-async function determineState(userId: string, mangaId: string, lastCheckEpoch: number, epoch: number): Promise<State> {
+declare type DetermineStateResponse = { state: State, epoch: number };
+
+async function determineState(userId: string, mangaId: string, lastCheckEpoch: number, currentEpoch: number): Promise<DetermineStateResponse> {
   try {
-    const recentCheckCount: number = await getRecentCheckCount(userId, epoch - Duration.SECONDS(5));
+    const recentCheckCount: number = await getRecentCheckCount(userId, currentEpoch - Duration.SECONDS(5));
     const lastCheck: number = await getLastCheck(userId, mangaId);
     const lastUpdate: number = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0 || lastCheck < 0) { // not fetched before
-      await insertMangaRecord(userId, mangaId, epoch);
-      return 'unknown';
+      await insertMangaRecord(userId, mangaId, currentEpoch);
+      return { state: 'unknown', epoch: lastCheckEpoch };
     }
-    await updateMangaRecordForCheck(userId, mangaId, epoch);
-    if(lastCheck < (epoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
-      return 'unknown';
+    await updateMangaRecordForCheck(userId, mangaId, currentEpoch);
+    if(lastCheck < (currentEpoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
+      return { state: 'unknown', epoch: lastCheck };
     }
     if(recentCheckCount < 2) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
-      return 'updated';
+      return { state: 'updated', epoch: lastCheck };
     }
-    return lastUpdate < lastCheckEpoch ? 'current' : 'updated';
+    return { state: lastUpdate < lastCheckEpoch ? 'current' : 'updated', epoch: lastCheck };
   } catch (e) {
     console.error('Encountered error determining state', e);
-    return 'error';
+    return { state: 'error', epoch: lastCheckEpoch };
   }
 }
 
@@ -133,8 +135,8 @@ app.get('/manga-check', async (req: Request, res: Response) => {
       return;
     }
     const lastCheckEpoch: number = ensureInt(req.query.lastCheckEpoch ?? '0');
-    const epoch: number = Date.now();
-    const state: State = await determineState(userId, mangaId, lastCheckEpoch, epoch);
+    const currentEpoch: number = Date.now();
+    const { state, epoch } = await determineState(userId, mangaId, lastCheckEpoch, currentEpoch);
     res.json({ epoch, state });
   } catch (e) {
     console.error('Encountered error in request handler', e);
