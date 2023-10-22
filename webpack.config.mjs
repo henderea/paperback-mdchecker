@@ -38,7 +38,8 @@ export default {
   devtool: 'source-map',
   entry: {
     'unknown-titles': './src/unknown-titles.ts',
-    'update-check': './src/update-check.ts'
+    'update-check': './src/update-check.ts',
+    'all-info': './src/all-info.ts'
   },
   module: {
     rules: [

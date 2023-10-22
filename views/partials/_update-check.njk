@@ -1,0 +1,58 @@
+<table class="updateCheckTable">
+  <tbody>
+    <tr>
+      <th>State</th>
+      <td class="state {{ updateCheck.state }}">{{ updateCheck.state }}</td>
+    </tr>
+    {% if updateCheck.start %}
+      <tr>
+        <th>Start</th>
+        <td>{{ updateCheck.start }}</td>
+      </tr>
+    {% endif %}
+    {% if updateCheck.end %}
+      <tr>
+        <th>End</th>
+        <td>{{ updateCheck.end }}</td>
+      </tr>
+    {% endif %}
+    {% if updateCheck.duration %}
+      <tr>
+        <th>Duration</th>
+        <td>{{ updateCheck.duration }}</td>
+      </tr>
+    {% endif %}
+    {% if updateCheck.count !== undefined %}
+      <tr>
+        <th>Count</th>
+        <td>{{ updateCheck.count }}</td>
+      </tr>
+    {% endif %}
+    {% if updateCheck.lastUserFetch %}
+      <tr>
+        <th>Last User Fetch</th>
+        <td>{{ updateCheck.lastUserFetch }}</td>
+      </tr>
+    {% endif %}
+    {% if updateCheck.updatesSinceLastFetch %}
+      <tr>
+        <th>Updates Since Last Fetch</th>
+        <td>
+          <b>Count:</b> {{ updateCheck.updatesSinceLastFetch | length }}<br>
+          {% if updateCheck.updatesSinceLastFetch | notEmpty %}
+            <table class="userUpdatesTable">
+              <tbody>
+                {% for manga in updateCheck.updatesSinceLastFetch %}
+                  <tr>
+                    <td class="time-ago">({{ manga.lastUpdateAgo }} ago)</td>
+                    <td class="link-cell"><a href="https://mangadex.org/title/{{ manga.id }}" target="_blank">{{ manga.title | default(manga.id, true) }}</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        </td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>

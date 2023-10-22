@@ -1,6 +1,8 @@
-{% set title = 'Unknown Titles' %}
-{% set resourceName = 'unknown-titles' %}
+{% set title = 'All Info' %}
+{% set resourceName = 'all-info' %}
 {% extends 'layouts/layout.njk' %}
 {% block body %}
+
+{% include 'partials/_update-check.njk' %}
 {% include 'partials/_unknown-titles.njk' %}
 {% endblock %}

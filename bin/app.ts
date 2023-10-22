@@ -283,7 +283,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
 
 app.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
-  const render = async (data: UpdateData) => res.renderMinified('update-check.njk', data);
+  const render = async (updateCheck: UpdateData) => res.renderMinified('update-check.njk', { updateCheck });
   const user: User | undefined = req.user;
   await render(await getUserUpdateData(user));
 });
@@ -338,9 +338,15 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
 }
 
 app.get('/unknown-titles', async (req: Request, res: Response) => {
-  const render = async (data: UnknownTitlesData) => res.renderMinified('unknown-titles.njk', data);
+  const render = async (unknownTitles: UnknownTitlesData) => res.renderMinified('unknown-titles.njk', { unknownTitles });
   const user: User | undefined = req.user;
   await render(await getUnknownTitlesData(user));
+});
+
+app.get('/all-info', async (req: Request, res: Response) => {
+  const render = async (updateCheck: UpdateData, unknownTitles: UnknownTitlesData) => res.renderMinified('all-info.njk', { updateCheck, unknownTitles });
+  const user: User | undefined = req.user;
+  await render(await getUserUpdateData(user), await getUnknownTitlesData(user));
 });
 
 function startServerListen(): Server {
