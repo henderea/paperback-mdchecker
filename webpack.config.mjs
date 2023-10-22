@@ -10,7 +10,7 @@ const { ProgressPlugin } = webpack;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const mode = process.env.NODE_ENV || 'production';
-const showProgress = true;
+const showProgress = process.env.SHOW_PROGRESS != 'false';
 
 // const cacheVersionNumber = '1'; // increment this to reset cache. cache should be reset after major NodeJS dependency updates
 // const cacheVersionPrefix = mode == 'production' ? '' : 'dev-';

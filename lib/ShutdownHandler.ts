@@ -1,15 +1,22 @@
+export type RunType = 'regular' | 'nodemon';
+
 class ShutdownHandler {
-  private readonly _actions: Array<() => Promise<void>> = [];
+  private readonly _actions: Array<(runType: RunType) => Promise<void>> = [];
 
   constructor() {
     process.on('SIGINT', async () => {
       for(const action of this.actions) {
-        await action();
+        await action('regular');
+      }
+    });
+    process.on('SIGUSR2', async () => {
+      for(const action of this.actions) {
+        await action('nodemon');
       }
     });
   }
 
-  get actions(): Array<() => Promise<void>> { return this._actions; }
+  get actions(): Array<(runType: RunType) => Promise<void>> { return this._actions; }
 
   do(action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
     if(typeof action === 'function') {
@@ -18,11 +25,22 @@ class ShutdownHandler {
     return this;
   }
 
+  runTypeDo(runType: RunType, action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
+    if(typeof action === 'function') {
+      this.actions.push(async (rt: RunType) => { if(rt == runType) { action(...params); } });
+    }
+    return this;
+  }
+
   log(logText: string) { return this.do(console.log, logText); }
 
   logIf(logText: string, condition: boolean) { return condition ? this.log(logText) : this; }
 
-  exit(exitCode: number = 0) { return this.do(process.exit, exitCode); }
+  exit(exitCode: number = 0) {
+    return this
+      .runTypeDo('regular', process.exit, exitCode)
+      .runTypeDo('nodemon', () => { process.kill(process.pid, 'SIGUSR2'); });
+  }
 
   thenDo(action: (...args: any[]) => void | Promise<void>, ...params: any[]) { return this.do(action, ...params); }
 
