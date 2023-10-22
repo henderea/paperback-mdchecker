@@ -84,10 +84,6 @@
       "lib",
       "views"
     ],
-    "extensions": [
-      "ts",
-      "json",
-      "njk"
-    ]
+    "ext": "*.ts,*.json,*.njk"
   }
 }

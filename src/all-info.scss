@@ -1,2 +1,17 @@
 @import './update-check.scss';
 @import './unknown-titles.scss';
+
+body, html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.spacerDiv {
+  height: 2px;
+  overflow: hidden;
+  margin: 4em 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #fff;
+}
