@@ -44,11 +44,13 @@ nunjucks.configure('views', {
   autoescape: true,
   express: app
 })
-  .addGlobal('now', () => Date.now())
-  .addFilter('notEmpty', function(value: string | any[] | null | undefined): boolean {
+  .addGlobal('now', function now() {
+    return Date.now();
+  })
+  .addFilter('notEmpty', function notEmpty(value: string | any[] | null | undefined): boolean {
     return !isEmpty(value);
   })
-  .addFilter('isEmpty', function(value: string | any[] | null | undefined): boolean {
+  .addFilter('isEmpty', function isEmpty(value: string | any[] | null | undefined): boolean {
     return isEmpty(value);
   });
 
