@@ -8,10 +8,16 @@ body, html {
 }
 
 .spacerDiv {
-  height: 2px;
+  height: 0.5em;
   overflow: hidden;
   margin: 4em 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #333 50%, rgba(255, 255, 255, 0));
+}
+
+@media (prefers-color-scheme: dark) {
+  .spacerDiv {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0), #fff 50%, rgba(0, 0, 0, 0));
+  }
 }
