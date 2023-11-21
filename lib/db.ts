@@ -40,7 +40,7 @@ export declare interface UserResult extends BasicUserResult {
 
 export async function listUsersBasic(): Promise<BasicUserResult[]> {
   const result: QueryResult<BasicUserResult> = await query('select user_id, roles from user_id');
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return [];
   }
   return result.rows;
@@ -48,7 +48,7 @@ export async function listUsersBasic(): Promise<BasicUserResult[]> {
 
 export async function listUsers(): Promise<UserResult[]> {
   const result: QueryResult<UserResult> = await query('select user_id, roles, pushover_token, pushover_app_token_override from user_id');
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return [];
   }
   return result.rows;
@@ -56,7 +56,7 @@ export async function listUsers(): Promise<UserResult[]> {
 
 export async function getRecentCheckCount(userId: string, minCheck: number): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select count(0) from user_manga where user_id = $1 and last_check >= $2', [userId, minCheck]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return 0;
   }
   return ensureInt(result.rows[0][0]);
@@ -64,7 +64,7 @@ export async function getRecentCheckCount(userId: string, minCheck: number): Pro
 
 export async function getLastCheck(userId: string, mangaId: string): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select last_check from user_manga where user_id = $1 and manga_id = $2', [userId, mangaId]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return -1;
   }
   return ensureInt(result.rows[0][0]);
@@ -72,7 +72,7 @@ export async function getLastCheck(userId: string, mangaId: string): Promise<num
 
 export async function getLastUserCheck(userId: string): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select max(last_check) from user_manga where user_id = $1', [userId]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return -1;
   }
   return ensureInt(result.rows[0][0]);
@@ -80,7 +80,7 @@ export async function getLastUserCheck(userId: string): Promise<number> {
 
 export async function getUserUpdateCount(userId: string, latestCheck: number): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select count(0) from user_manga where user_id = $1 and last_check > $2 and last_update > last_check', [userId, latestCheck]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return -1;
   }
   return ensureInt(result.rows[0][0]);
@@ -88,7 +88,7 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
 
 export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaUpdateInfo[]> {
   const result: QueryResult<[string, string | null, number]> = await aQuery('select manga_id, manga_title, last_update from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by last_update, manga_title, manga_id', [userId, latestCheck]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return [];
   }
   return result.rows.map(([id, title, lastUpdate]) => ({ id, title: title ?? null, lastUpdate: ensureInt(lastUpdate) }));
@@ -96,7 +96,7 @@ export async function getUserUpdates(userId: string, latestCheck: number): Promi
 
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select last_update from user_manga where user_id = $1 and manga_id = $2', [userId, mangaId]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return -1;
   }
   return ensureInt(result.rows[0][0]);
@@ -112,7 +112,7 @@ export async function updateMangaRecordForCheck(userId: string, mangaId: string,
 
 export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | null> {
   const result: QueryResult<[string]> = await aQuery('select distinct manga_id from user_manga where last_check >= $1', [minCheck]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows.map((r) => r[0]);
@@ -120,7 +120,7 @@ export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | 
 
 export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Promise<string[] | null> {
   const result: QueryResult<[string]> = await aQuery('with mangas as (select manga_id from user_manga where last_title_check <= $3 order by last_title_check asc, last_update desc, last_check desc, manga_id asc limit $2) select distinct manga_id from mangas order by manga_id limit $1', [limit, Math.round(limit * 1.25), maxCheck]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows.map((r) => r[0]);
@@ -128,7 +128,7 @@ export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Pr
 
 export async function getLatestUpdate(): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select max(last_update) as latest_update from user_manga');
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return -1;
   }
   return ensureInt(result.rows[0][0]);
@@ -178,7 +178,7 @@ export declare interface UserPushUpdateResult {
 
 export async function listUserPushUpdates(epoch: number): Promise<UserPushUpdateResult[] | null> {
   const result: QueryResult<UserPushUpdateResult> = await query(`select count(distinct manga_id) as count, user_id, pushover_token, pushover_app_token_override from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token, pushover_app_token_override`, [epoch]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows;
@@ -192,7 +192,7 @@ export declare interface UpdateCheckResult {
 
 export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> {
   const result: QueryResult<UpdateCheckResult> = await query('select check_start_time, check_end_time, update_count from update_check order by check_start_time desc limit 1');
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows[0];
@@ -200,7 +200,7 @@ export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> 
 
 export async function getUnknownTitles(userId: string, isAdmin: boolean): Promise<string[] | null> {
   const result: QueryResult<[string]> = await aQuery(`select manga_id from user_manga where (manga_title is null or length(manga_title) <= 0) and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows.map((r) => r[0]);
@@ -208,7 +208,7 @@ export async function getUnknownTitles(userId: string, isAdmin: boolean): Promis
 
 export async function getNonLatinTitles(userId: string): Promise<TitledMangaInfo[] | null> {
   const result: QueryResult<TitledMangaInfo> = await query(`select manga_id, manga_title from user_manga where user_id = $1 and manga_title is not null and length(manga_title) > 0 and manga_title ~* '[^[:alnum:][:blank:][:punct:][:cntrl:]]'`, [userId]);
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows;
@@ -221,7 +221,7 @@ export declare interface FailedTitle {
 
 export async function getFailedTitles(): Promise<FailedTitle[] | null> {
   const result: QueryResult<FailedTitle> = await query('select manga_id, last_failure from failed_titles order by last_failure desc');
-  if(result.rowCount <= 0) {
+  if(result.rowCount ?? 0 <= 0) {
     return null;
   }
   return result.rows;
