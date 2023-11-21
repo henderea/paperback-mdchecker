@@ -6,3 +6,8 @@ declare type EmptyObject = Record<string, never>;
 declare interface Dictionary<T> {
   [index: string]: T;
 }
+
+declare module 'got' {
+  import * as got from 'got/dist/source';
+  export = got;
+}
