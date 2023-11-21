@@ -11,14 +11,14 @@
     "lint:fix": "eslint --fix .",
     "watch:app": "nodemon bin/app-test.ts",
     "watch:wp": "NODE_ENV=development SHOW_PROGRESS=false webpack --watch",
-    "start": "concurrently \"yarn watch:app\" \"yarn watch:wp\" --names \"💻,📦\" --prefix name",
+    "start": "concurrently \"npm run watch:app\" \"npm run watch:wp\" --names \"💻,📦\" --prefix name",
     "clean:builds": "rm -rf build",
     "clean:wp": "rm -rf public/generated",
-    "clean": "yarn clean:builds && yarn clean:wp",
+    "clean": "npm run clean:builds && npm run clean:wp",
     "build:app": "./scripts/ncc-build-release.sh app",
     "build:update-check": "./scripts/ncc-build-release.sh update-check",
     "build:wp": "NODE_ENV=production webpack",
-    "build": "yarn build:wp && yarn build:app && yarn build:update-check"
+    "build": "npm run build:wp && npm run build:app && npm run build:update-check"
   },
   "dependencies": {
     "entities": "^4.5.0",
