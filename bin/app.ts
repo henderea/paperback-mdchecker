@@ -94,7 +94,7 @@ declare type DetermineStateResponse = { state: State, epoch: number };
 
 async function determineState(userId: string, mangaId: string, lastCheckEpoch: number, currentEpoch: number): Promise<DetermineStateResponse> {
   try {
-    const recentCheckCount: number = await getRecentCheckCount(userId, currentEpoch - Duration.SECONDS(5));
+    const recentCheckCount: number = await getRecentCheckCount(userId, currentEpoch - Duration.SECONDS(2));
     const lastCheck: number = await getLastCheck(userId, mangaId);
     const lastUpdate: number = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0 || lastCheck < 0) { // not fetched before
@@ -105,7 +105,7 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
     if(lastCheck < (currentEpoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
       return { state: 'unknown', epoch: lastCheck };
     }
-    if(recentCheckCount < 2) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
+    if(recentCheckCount < 1) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
       return { state: 'updated', epoch: lastCheck };
     }
     return { state: lastUpdate < lastCheckEpoch ? 'current' : 'updated', epoch: lastCheck };
