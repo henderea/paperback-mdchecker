@@ -127,7 +127,7 @@ export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | 
 }
 
 export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Promise<string[] | null> {
-  const result: QueryResult<[string]> = await aQuery('with mangas as (select manga_id from user_manga where last_title_check <= $3 order by last_title_check asc, last_update desc, last_check desc, manga_id asc limit $2) select distinct manga_id from mangas order by manga_id limit $1', [limit, Math.round(limit * 1.25), maxCheck]);
+  const result: QueryResult<[string]> = await aQuery('select distinct manga_id from user_manga where last_title_check <= $2 order by min(last_title_check) asc, max(last_update) desc, max(last_check) desc, manga_id asc limit $1', [limit, maxCheck]);
   if(resultEmpty(result)) {
     return null;
   }
