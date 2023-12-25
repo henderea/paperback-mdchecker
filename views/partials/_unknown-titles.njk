@@ -31,7 +31,7 @@
         {% for failedTitle in unknownTitles.failedTitles %}
           <tr>
             <th>Failed:</th>
-            <td>{{ failedTitle.id }} ({{ failedTitle.lastFailure }}; <a href="https://mangadex.org/title/{{ failedTitleid }}" target="_blank">GO</a>)</td>
+            <td>{{ failedTitle.id }} ({{ failedTitle.lastFailure }}; <a href="https://mangadex.org/title/{{ failedTitle.id }}" target="_blank">GO</a>)</td>
           </tr>
         {% endfor %}
       {% endif %}
