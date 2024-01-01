@@ -38,7 +38,7 @@
       <tr>
         <th>Updates Since Last Fetch</th>
         <td>
-          <b>Count:</b> {{ updateCheck.updatesSinceLastFetch | length }}<br>
+          <b>Count:</b> {{ updateCheck.updatesSinceLastFetch | length }} (of {{ updateCheck.userChecks }})<br>
           {% if updateCheck.updatesSinceLastFetch | notEmpty %}
             <table class="userUpdatesTable">
               <tbody>

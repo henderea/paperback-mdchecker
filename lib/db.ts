@@ -102,6 +102,14 @@ export async function getUserUpdates(userId: string, latestCheck: number): Promi
   return result.rows.map(([id, title, lastUpdate]) => ({ id, title: title ?? null, lastUpdate: ensureInt(lastUpdate) }));
 }
 
+export async function getUserChecks(userId: string, latestCheck: number): Promise<number> {
+  const result: QueryResult<[number]> = await aQuery('select count(0) from user_manga where user_id = $1 and last_check > $2', [userId, latestCheck]);
+  if(resultEmpty(result)) {
+    return 0;
+  }
+  return result.rows[0][0];
+}
+
 export async function getLastUpdate(userId: string, mangaId: string): Promise<number> {
   const result: QueryResult<[number]> = await aQuery('select last_update from user_manga where user_id = $1 and manga_id = $2', [userId, mangaId]);
   if(resultEmpty(result)) {

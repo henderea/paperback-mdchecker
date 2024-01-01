@@ -14,7 +14,7 @@ import { minify } from 'html-minifier-terser';
 import { createHttpTerminator } from 'http-terminator';
 
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
+import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, getUserChecks, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -197,7 +197,7 @@ declare interface FormattedMangaUpdateInfo extends MangaInfo {
   lastUpdateAgo: string;
 }
 
-declare type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: FormattedMangaUpdateInfo[] };
+declare type UserUpdateData = { lastUserFetch: TimeString, updatesSinceLastFetch: FormattedMangaUpdateInfo[], userChecks: number };
 
 declare type UpdateNoUser = { state: 'no-user' };
 declare type UpdateError = { state: 'error' };
@@ -247,8 +247,9 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
     if(lastUserCheck > 0) {
       const lastUserFetch: TimeString = formatEpoch(lastUserCheck);
       const userUpdates: MangaUpdateInfo[] = await getUserUpdates(userId, lastUserCheck - Duration.HOURS(6));
+      const userChecks: number = await getUserChecks(userId, lastUserCheck - Duration.HOURS(6));
       const updatesSinceLastFetch: FormattedMangaUpdateInfo[] = processMangaUpdateInfo(userUpdates);
-      userData = { lastUserFetch, updatesSinceLastFetch };
+      userData = { lastUserFetch, updatesSinceLastFetch, userChecks };
     }
     const lastCheck: UpdateCheckResult | null = await getLatestUpdateCheck();
     if(!lastCheck) {
