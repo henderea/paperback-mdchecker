@@ -147,6 +147,11 @@ app.get('/manga-check', async (req: Request, res: Response) => {
 });
 
 /**
+ * when the update check process got a service unavailable (503) response
+ */
+declare type UpdateCheckStateServiceUnavailable = 'service-unavailable';
+
+/**
  * when the update check process failed
  */
 declare type UpdateCheckStateFailed = 'failed';
@@ -161,7 +166,7 @@ declare type UpdateCheckStateNoSeries = 'no-series';
  */
 declare type UpdateCheckStateUnknownResult = 'unknown-result';
 
-declare type EndedUpdateCheckState = 'completed' | UpdateCheckStateFailed | UpdateCheckStateNoSeries | UpdateCheckStateUnknownResult;
+declare type EndedUpdateCheckState = 'completed' | UpdateCheckStateServiceUnavailable | UpdateCheckStateFailed | UpdateCheckStateNoSeries | UpdateCheckStateUnknownResult;
 declare type UpdateCheckState = 'no-user' | 'unknown' | 'error' | 'running' | EndedUpdateCheckState;
 
 function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
@@ -172,6 +177,9 @@ function prettyJsonResponse(res: Response): (data: Dictionary<any>) => void {
 }
 
 function getUpdateCheckStateFromCount(count: number): EndedUpdateCheckState {
+  if(count == -3) {
+    return 'service-unavailable';
+  }
   if(count == -2) {
     return 'failed';
   }

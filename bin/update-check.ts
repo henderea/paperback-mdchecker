@@ -21,61 +21,69 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
 
-async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<string[]> {
-  let offset: number = 0;
-  let loadNextPage: boolean = true;
-  const updatedManga: string[] = [];
-  const time: Date = new Date(latestUpdate);
-  const updatedAt: string = time.toISOString().split('.')[0];
+async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<string[] | number | false> {
+  try {
+    let offset: number = 0;
+    let loadNextPage: boolean = true;
+    const updatedManga: string[] = [];
+    const time: Date = new Date(latestUpdate);
+    const updatedAt: string = time.toISOString().split('.')[0];
 
-  while(loadNextPage) {
-    const url: string = new URLBuilder(MANGADEX_API)
-      .addPathComponent('chapter')
-      .addQueryParameter('limit', PAGE_SIZE)
-      .addQueryParameter('offset', offset)
-      .addQueryParameter('publishAtSince', updatedAt)
-      .addQueryParameter('order', { 'publishAt': 'desc' })
-      .addQueryParameter('translatedLanguage', ['en'])
-      .addQueryParameter('includeFutureUpdates', '0')
-      .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
-      .buildUrl();
+    while(loadNextPage) {
+      const url: string = new URLBuilder(MANGADEX_API)
+        .addPathComponent('chapter')
+        .addQueryParameter('limit', PAGE_SIZE)
+        .addQueryParameter('offset', offset)
+        .addQueryParameter('publishAtSince', updatedAt)
+        .addQueryParameter('order', { 'publishAt': 'desc' })
+        .addQueryParameter('translatedLanguage', ['en'])
+        .addQueryParameter('includeFutureUpdates', '0')
+        .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
+        .buildUrl();
 
-    const response = await got(url, {
-      headers: {
-        referer: `${MANGADEX_DOMAIN}/`
+      const response = await got(url, {
+        headers: {
+          referer: `${MANGADEX_DOMAIN}/`
+        }
+      });
+
+      // If we have no content, there are no updates available
+      if(response.statusCode == 204) {
+        console.log('Response was 204');
+        return updatedManga;
       }
-    });
 
-    // If we have no content, there are no updates available
-    if(response.statusCode == 204) {
-      console.log('Response was 204');
-      return updatedManga;
-    }
+      const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+      // console.log(`status code: ${response.statusCode}`);
+      // console.log('response:', json);
 
-    const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
-    // console.log(`status code: ${response.statusCode}`);
-    // console.log('response:', json);
+      if(json.data === undefined) {
+        throw new Error(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
+      }
 
-    if(json.data === undefined) {
-      throw new Error(`Failed to parse JSON results for filterUpdatedManga using the date ${updatedAt} and the offset ${offset}`);
-    }
+      for(const chapter of json.data) {
+        const pages: number = Number(chapter.attributes.pages);
+        const mangaId: string = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
 
-    for(const chapter of json.data) {
-      const pages: number = Number(chapter.attributes.pages);
-      const mangaId: string = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
+        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
+          updatedManga.push(mangaId);
+        }
+      }
 
-      if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
-        updatedManga.push(mangaId);
+      offset = offset + PAGE_SIZE;
+      if(json.total <= offset || offset >= (PAGE_SIZE * MAX_REQUESTS)) {
+        loadNextPage = false;
       }
     }
 
-    offset = offset + PAGE_SIZE;
-    if(json.total <= offset || offset >= (PAGE_SIZE * MAX_REQUESTS)) {
-      loadNextPage = false;
+    return updatedManga;
+  } catch (e) {
+    const rv: number | false = (e as any).response?.statusCode ?? false;
+    if(!rv) {
+      console.error('Encountered error fetching updates', e);
     }
+    return rv;
   }
-
-  return updatedManga;
 }
 
 async function determineLatestUpdate(epoch: number): Promise<number> {
@@ -110,26 +118,34 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
 }
 
 async function queryUpdates(): Promise<void> {
-  // console.log('Starting update');
   const epoch: number = Date.now();
   try {
     await addUpdateCheck(epoch);
-    // console.log('Added update check');
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
-      // console.log('No series');
       await updateCompletedUpdateCheck(epoch, Date.now(), -1);
       return;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
-    // console.log(`Latest update: ${latestUpdate}`);
-    const updatedManga: string[] = await findUpdatedManga(mangaIds, latestUpdate);
+    const updatedManga: string[] | number | false = await findUpdatedManga(mangaIds, latestUpdate);
+    if(updatedManga === false) { // unknown error
+      await updateCompletedUpdateCheck(epoch, Date.now(), -2);
+      return;
+    }
+    if(typeof updatedManga == 'number') { // failure status code
+      if(updatedManga === 503) { // service unavailable (MD probably down)
+        console.log('Got status code 503 (service unavailable) during update check');
+        await updateCompletedUpdateCheck(epoch, Date.now(), -3);
+      } else { // other failure status code
+        console.log(`Got status code ${updatedManga} during update check`);
+        await updateCompletedUpdateCheck(epoch, Date.now(), -2);
+      }
+      return;
+    }
     if(!updatedManga || updatedManga.length == 0) { // no updates found
-      // console.log('No updates');
       await updateCompletedUpdateCheck(epoch, Date.now(), 0);
       return;
     }
-    // console.log('Updates found');
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
     await sendUserUpdatesPush(epoch);
@@ -189,7 +205,7 @@ async function queryTitles(): Promise<void> {
       const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
-        console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+        // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
         await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
           const fetchedIds: string[] = mangas.map((m) => m.id);
