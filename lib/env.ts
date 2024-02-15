@@ -38,3 +38,4 @@ export const titleUpdateSchedule: string = processString(process.env.TITLE_UPDAT
 export const userUpdateSchedule: string = processString(process.env.USER_UPDATE_SCHEDULE) || '*/20 * * * *';
 export const noStartStopLogs: boolean = processBoolean(process.env.NO_START_STOP_LOGS, false);
 export const pushoverAppToken: string | null = processString(process.env.PUSHOVER_APP_TOKEN);
+export const baseUrl: string = (processString(process.env.BASE_URL) || '').replace(/\/$/, '');

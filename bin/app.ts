@@ -1,10 +1,10 @@
 import type { Server } from 'http';
-import type { Application, Request, Response, NextFunction } from 'express';
+import type { Application, Request, Response, NextFunction, Router } from 'express';
 
 import type { User } from 'lib/UserList';
 import type { UpdateCheckResult, MangaInfo, TitledMangaInfo, MangaUpdateInfo, FailedTitle } from 'lib/db';
 
-import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs } from 'lib/env';
+import { expressPort, expressHost, expressSocketPath, userUpdateSchedule, noStartStopLogs, baseUrl } from 'lib/env';
 
 import schedule from 'node-schedule';
 
@@ -35,6 +35,7 @@ declare global {
 }
 
 const app: Application = express();
+const router: Router = express.Router();
 
 function isEmpty(value: string | any[] | null | undefined): boolean {
   return value === null || value === undefined || !value.length || value.length == 0;
@@ -54,7 +55,7 @@ nunjucks.configure('views', {
     return isEmpty(value);
   });
 
-app.use(express.static('public', { index: false }));
+router.use(express.static('public', { index: false }));
 
 const users: UserList = new UserList();
 
@@ -62,7 +63,7 @@ schedule.scheduleJob(userUpdateSchedule, () => users.update());
 
 users.update();
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+router.use((req: Request, res: Response, next: NextFunction) => {
   res.renderMinified = function(view: string, options?: object): Promise<void> {
     return new Promise((resolve, reject) => {
       this.render(view, options, function(err: Error, html: string) {
@@ -81,7 +82,12 @@ function getUser(userId: string | null | undefined): User | undefined {
   return users.getUser(userId);
 }
 
-app.use((req: Request, _res: Response, next: NextFunction) => {
+router.use((req: Request, res: Response, next: NextFunction) => {
+  res.locals.basePath = req.baseUrl || '/';
+  next();
+});
+
+router.use((req: Request, _res: Response, next: NextFunction) => {
   const userId: string | undefined = req.query.userId as string | undefined;
   req.userId = userId;
   req.user = getUser(userId);
@@ -123,7 +129,7 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
  * returns: { epoch, state } (as json)
  * where epoch is a number and state is 'unknown', 'updated', 'current', 'no-user', or 'error'
  */
-app.get('/manga-check', async (req: Request, res: Response) => {
+router.get('/manga-check', async (req: Request, res: Response) => {
   try {
     const user: User | undefined = req.user;
     if(!user) { // if the user isn't in the table, reject the request right away
@@ -292,7 +298,7 @@ async function getUserUpdateData(user: User | undefined): Promise<UpdateData> {
   }
 }
 
-app.get('/last-update-check', async (req: Request, res: Response) => {
+router.get('/last-update-check', async (req: Request, res: Response) => {
   // const pjson: (data: UpdateData) => void = prettyJsonResponse(res);
   const render = async (updateCheck: UpdateData) => res.renderMinified('update-check.njk', { updateCheck });
   const user: User | undefined = req.user;
@@ -307,7 +313,7 @@ function mapForJson(data: UpdateData): Dictionary<any> {
   return data;
 }
 
-app.get('/last-update-check.json', async (req: Request, res: Response) => {
+router.get('/last-update-check.json', async (req: Request, res: Response) => {
   const pjson = prettyJsonResponse(res);
   const user: User | undefined = req.user;
   pjson(mapForJson(await getUserUpdateData(user)));
@@ -348,17 +354,19 @@ async function getUnknownTitlesData(user: User | undefined): Promise<UnknownTitl
   }
 }
 
-app.get('/unknown-titles', async (req: Request, res: Response) => {
+router.get('/unknown-titles', async (req: Request, res: Response) => {
   const render = async (unknownTitles: UnknownTitlesData) => res.renderMinified('unknown-titles.njk', { unknownTitles });
   const user: User | undefined = req.user;
   await render(await getUnknownTitlesData(user));
 });
 
-app.get('/all-info', async (req: Request, res: Response) => {
+router.get('/all-info', async (req: Request, res: Response) => {
   const render = async (updateCheck: UpdateData, unknownTitles: UnknownTitlesData) => res.renderMinified('all-info.njk', { updateCheck, unknownTitles });
   const user: User | undefined = req.user;
   await render(await getUserUpdateData(user), await getUnknownTitlesData(user));
 });
+
+app.use(baseUrl, router);
 
 function startServerListen(): Server {
   if(expressSocketPath) { // using unix socket
