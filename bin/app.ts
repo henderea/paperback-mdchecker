@@ -83,7 +83,7 @@ function getUser(userId: string | null | undefined): User | undefined {
 }
 
 router.use((req: Request, res: Response, next: NextFunction) => {
-  res.locals.basePath = req.baseUrl || '/';
+  res.locals.basePath = (req.baseUrl || '').replace(/\/$/, '');
   next();
 });
 
