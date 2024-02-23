@@ -17,11 +17,14 @@ create table user_manga (
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );
 
-create index ix_user_manga_manga_id_last_check on user_manga (manga_id, last_check);
-create index ix_user_manga_user_id_manga_id_last_update_last_check on user_manga (user_id, manga_id, last_update, last_check);
-create index ix_user_manga_user_id_last_check_last_update on user_manga (user_id, last_check, last_update);
-create index ix_user_manga_last_update_last_check on user_manga (last_update, last_check);
-create index ix_user_manga_last_title_check_last_update_last_check_manga_id on user_manga (last_title_check, last_update, last_check, manga_id);
+create index ix_user_manga_mid_lcheck on user_manga (manga_id, last_check);
+create index ix_user_manga_uid_mid_lcheck_lupdate_mtitle on user_manga (user_id, manga_id, last_check, last_update, manga_title);
+create index ix_user_manga_uid_lcheck_lupdate on user_manga (user_id, last_check, last_update);
+create index ix_user_manga_uid_mid_lcheck_lupdate on user_manga (user_id, manga_id, last_check, last_update);
+create index ix_user_manga_lupdate_lcheck on user_manga (last_update, last_check);
+create index ix_user_manga_ltitle_check_lupdate_lcheck_mid on user_manga (last_title_check, last_update, last_check, manga_id);
+create index ix_user_manga_lcheck_mid on user_manga (last_check, manga_id);
+create index ix_user_manga_uid_mid_mtitle on user_manga (user_id, manga_id, manga_title);
 
 create table update_check (
   check_start_time bigint not null,
@@ -30,7 +33,7 @@ create table update_check (
   constraint pk_update_check primary key (check_start_time)
 );
 
-create index ix_update_check_update_count_check_start_time on update_check (update_count, check_start_time);
+create index ix_update_check_cstart_time_ucount on update_check (check_start_time, update_count);
 
 create table failed_titles (
   manga_id text not null,
@@ -38,4 +41,4 @@ create table failed_titles (
   constraint pk_failed_titles primary key (manga_id)
 );
 
-create index ix_failed_titles_last_failure_manga_id on failed_titles (last_failure, manga_id);
+create index ix_failed_titles_lfailure_mid on failed_titles (last_failure, manga_id);
