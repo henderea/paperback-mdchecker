@@ -12,13 +12,13 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const mode = process.env.NODE_ENV || 'production';
 const showProgress = process.env.SHOW_PROGRESS != 'false';
 
-// const cacheVersionNumber = '1'; // increment this to reset cache. cache should be reset after major NodeJS dependency updates
-// const cacheVersionPrefix = mode == 'production' ? '' : 'dev-';
-// const cacheVersion = `${cacheVersionPrefix}${cacheVersionNumber}`;
-// const cache = {
-//   type: 'filesystem',
-//   version: cacheVersion
-// };
+const cacheVersionNumber = '1'; // increment this to reset cache. cache should be reset after major NodeJS dependency updates
+const cacheVersionPrefix = mode == 'production' ? '' : 'dev-';
+const cacheVersion = `${cacheVersionPrefix}${cacheVersionNumber}`;
+const cache = {
+  type: 'filesystem',
+  version: cacheVersion
+};
 
 const plugins = [
   new MiniCssExtractPlugin({
@@ -127,6 +127,6 @@ export default {
     maxEntrypointSize: 10 * 1000 * 1000,
     hints: false
   },
-  // cache,
+  cache,
   plugins
 };
