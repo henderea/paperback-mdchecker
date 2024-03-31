@@ -151,7 +151,7 @@ router.get('/manga-check', async (req: Request, res: Response) => {
     const lastCheckEpoch: number = ensureInt(req.query.lastCheckEpoch ?? '0');
     const currentEpoch: number = Date.now();
     const { state, epoch } = await determineState(req.session.lastCheck, userId, mangaId, lastCheckEpoch, currentEpoch);
-    req.session.lastCheck = currentEpoch;
+    req.session.lastCheck = Date.now();
     req.session.save(() => res.json({ epoch, state }));
   } catch (e) {
     console.error('Encountered error in request handler', e);
