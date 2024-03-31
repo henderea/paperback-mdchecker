@@ -34,10 +34,10 @@ export const sessionMiddleware: RequestHandler = session({
   store: redisStore,
   resave: false,
   saveUninitialized: false,
-  rolling: true,
+  rolling: false,
   secret: 'paperback-mdchecker secret',
   cookie: {
-    maxAge: Duration.DAYS(7),
+    maxAge: Duration.DAYS(1),
     secure: false
   }
 });
