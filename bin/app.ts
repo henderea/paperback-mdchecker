@@ -16,7 +16,7 @@ import { createHttpTerminator } from 'http-terminator';
 
 import { sessionMiddleware, shutdownRedis } from 'lib/session';
 
-import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, getUserChecks, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
+import { shutdownClient, getLastUpdate, getLastUserCheck, getUserUpdates, getUserChecks, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
