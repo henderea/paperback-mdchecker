@@ -117,7 +117,7 @@ async function determineState(lastCheckHit: number | undefined, userId: string, 
     if(lastCheck < (currentEpoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
       return { state: 'unknown', epoch: lastCheck };
     }
-    if(lastCheckHit && (currentEpoch - lastCheckHit) <= Duration.SECONDS(2)) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
+    if(!lastCheckHit || (currentEpoch - lastCheckHit) > Duration.SECONDS(2)) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
       return { state: 'updated', epoch: lastCheck };
     }
     return { state: lastUpdate < lastCheckEpoch ? 'current' : 'updated', epoch: lastCheck };
