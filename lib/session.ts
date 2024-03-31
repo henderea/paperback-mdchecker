@@ -37,7 +37,7 @@ export const sessionMiddleware: RequestHandler = session({
   rolling: true,
   secret: 'paperback-mdchecker secret',
   cookie: {
-    maxAge: Duration.DAY,
+    maxAge: Duration.DAYS(7),
     secure: false
   }
 });
