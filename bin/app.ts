@@ -14,6 +14,8 @@ import { minify } from 'html-minifier-terser';
 import { createHttpTerminator } from 'http-terminator';
 
 
+import { sessionMiddleware, shutdownRedis } from 'lib/session';
+
 import { shutdownClient, getRecentCheckCount, getLastUpdate, getLastUserCheck, getUserUpdates, getUserChecks, insertMangaRecord, updateMangaRecordForCheck, getLastCheck, getLatestUpdateCheck, getUnknownTitles, getNonLatinTitles, getFailedTitles } from 'lib/db';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
@@ -35,6 +37,9 @@ declare global {
 }
 
 const app: Application = express();
+
+app.set('trust proxy', 1);
+
 const router: Router = express.Router();
 
 function isEmpty(value: string | any[] | null | undefined): boolean {
@@ -54,6 +59,8 @@ nunjucks.configure('views', {
   .addFilter('isEmpty', function isEmpty(value: string | any[] | null | undefined): boolean {
     return isEmpty(value);
   });
+
+router.use(sessionMiddleware);
 
 router.use(express.static('public', { index: false }));
 
@@ -98,9 +105,8 @@ declare type State = 'unknown' | 'updated' | 'current' | 'no-user' | 'error';
 
 declare type DetermineStateResponse = { state: State, epoch: number };
 
-async function determineState(userId: string, mangaId: string, lastCheckEpoch: number, currentEpoch: number): Promise<DetermineStateResponse> {
+async function determineState(lastCheckHit: number | undefined, userId: string, mangaId: string, lastCheckEpoch: number, currentEpoch: number): Promise<DetermineStateResponse> {
   try {
-    const recentCheckCount: number = await getRecentCheckCount(userId, currentEpoch - Duration.SECONDS(2));
     const lastCheck: number = await getLastCheck(userId, mangaId);
     const lastUpdate: number = await getLastUpdate(userId, mangaId);
     if(lastUpdate < 0 || lastCheck < 0) { // not fetched before
@@ -111,7 +117,7 @@ async function determineState(userId: string, mangaId: string, lastCheckEpoch: n
     if(lastCheck < (currentEpoch - Duration.DAYS(6))) { // hasn't been fetched recently, so the checker may not have been checking it
       return { state: 'unknown', epoch: lastCheck };
     }
-    if(recentCheckCount < 1) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
+    if(lastCheckHit && (currentEpoch - lastCheckHit) <= Duration.SECONDS(2)) { // if we haven't been checking a bunch of series quickly, this may be a regular series view load, so tell it to fetch data
       return { state: 'updated', epoch: lastCheck };
     }
     return { state: lastUpdate < lastCheckEpoch ? 'current' : 'updated', epoch: lastCheck };
@@ -144,8 +150,9 @@ router.get('/manga-check', async (req: Request, res: Response) => {
     }
     const lastCheckEpoch: number = ensureInt(req.query.lastCheckEpoch ?? '0');
     const currentEpoch: number = Date.now();
-    const { state, epoch } = await determineState(userId, mangaId, lastCheckEpoch, currentEpoch);
-    res.json({ epoch, state });
+    const { state, epoch } = await determineState(req.session.lastCheck, userId, mangaId, lastCheckEpoch, currentEpoch);
+    req.session.lastCheck = currentEpoch;
+    req.session.save(() => res.json({ epoch, state }));
   } catch (e) {
     console.error('Encountered error in request handler', e);
     res.json({ epoch: 0, state: 'error' });
@@ -400,6 +407,7 @@ function start(): void {
     .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
     .thenDo(httpTerminator.terminate)
     .thenDo(schedule.gracefulShutdown)
+    .thenDo(shutdownRedis)
     .thenDo(shutdownClient)
     .thenLogIf('Shutdown complete', !noStartStopLogs)
     .thenExit();
