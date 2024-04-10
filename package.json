@@ -21,17 +21,14 @@
     "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
   },
   "dependencies": {
-    "connect-redis": "^7.1.1",
     "entities": "^4.5.0",
     "express": "^4.19.2",
-    "express-session": "^1.18.0",
     "got": "14.2.1",
     "html-minifier-terser": "^7.2.0",
     "http-terminator": "^3.2.0",
     "node-schedule": "^2.1.1",
     "nunjucks": "^3.2.4",
-    "pg": "^8.11.5",
-    "redis": "^4.6.13"
+    "pg": "^8.11.5"
   },
   "devDependencies": {
     "@babel/core": "^7.24.4",
@@ -39,7 +36,6 @@
     "@babel/plugin-transform-typescript": "^7.24.4",
     "@babel/preset-env": "^7.24.4",
     "@types/express": "^4.17.21",
-    "@types/express-session": "^1.18.0",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^20.12.6",
     "@types/node-schedule": "^2.1.7",
