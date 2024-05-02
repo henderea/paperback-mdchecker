@@ -30,6 +30,7 @@ create table update_check (
   check_start_time bigint not null,
   check_end_time bigint,
   update_count integer not null default 0,
+  hit_page_fetch_limit boolean not null default false,
   constraint pk_update_check primary key (check_start_time)
 );
 

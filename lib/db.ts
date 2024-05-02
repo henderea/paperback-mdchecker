@@ -181,8 +181,8 @@ export async function addUpdateCheck(epoch: number): Promise<void> {
   await query('insert into update_check (check_start_time) values ($1)', [epoch]);
 }
 
-export async function updateCompletedUpdateCheck(startEpoch: number, endEpoch: number, count: number): Promise<void> {
-  await query('update update_check set check_end_time = $2, update_count = $3 where check_start_time = $1', [startEpoch, endEpoch, count]);
+export async function updateCompletedUpdateCheck(startEpoch: number, endEpoch: number, count: number, hitPageFetchLimit: boolean): Promise<void> {
+  await query('update update_check set check_end_time = $2, update_count = $3, hit_page_fetch_limit = $4 where check_start_time = $1', [startEpoch, endEpoch, count, hitPageFetchLimit]);
 }
 
 export declare interface UserPushUpdateResult {

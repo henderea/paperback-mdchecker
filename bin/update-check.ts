@@ -21,10 +21,11 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
 
-async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<string[] | number | false> {
+async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
     let loadNextPage: boolean = true;
+    let hitPageFetchLimit: boolean = false;
     const updatedManga: string[] = [];
     const time: Date = new Date(latestUpdate);
     const updatedAt: string = time.toISOString().split('.')[0];
@@ -50,7 +51,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       // If we have no content, there are no updates available
       if(response.statusCode == 204) {
         console.log('Response was 204');
-        return updatedManga;
+        return { updatedManga, hitPageFetchLimit };
       }
 
       const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
@@ -71,18 +72,22 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       }
 
       offset = offset + PAGE_SIZE;
-      if(json.total <= offset || offset >= (PAGE_SIZE * MAX_REQUESTS)) {
+      if(json.total <= offset) {
+        loadNextPage = false;
+      } else if(offset >= (PAGE_SIZE * MAX_REQUESTS)) {
+        console.log('Hit page fetch limit');
+        hitPageFetchLimit = true;
         loadNextPage = false;
       }
     }
 
-    return updatedManga;
+    return { updatedManga, hitPageFetchLimit };
   } catch (e) {
     const rv: number | false = (e as any).response?.statusCode ?? false;
     if(!rv) {
       console.error('Encountered error fetching updates', e);
     }
-    return rv;
+    return { updatedManga: rv, hitPageFetchLimit: false };
   }
 }
 
@@ -123,35 +128,35 @@ async function queryUpdates(): Promise<void> {
     await addUpdateCheck(epoch);
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
-      await updateCompletedUpdateCheck(epoch, Date.now(), -1);
+      await updateCompletedUpdateCheck(epoch, Date.now(), -1, false);
       return;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
-    const updatedManga: string[] | number | false = await findUpdatedManga(mangaIds, latestUpdate);
+    const { updatedManga, hitPageFetchLimit } = await findUpdatedManga(mangaIds, latestUpdate);
     if(updatedManga === false) { // unknown error
-      await updateCompletedUpdateCheck(epoch, Date.now(), -2);
+      await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
       return;
     }
     if(typeof updatedManga == 'number') { // failure status code
       if(updatedManga === 503) { // service unavailable (MD probably down)
         console.log('Got status code 503 (service unavailable) during update check');
-        await updateCompletedUpdateCheck(epoch, Date.now(), -3);
+        await updateCompletedUpdateCheck(epoch, Date.now(), -3, hitPageFetchLimit);
       } else { // other failure status code
         console.log(`Got status code ${updatedManga} during update check`);
-        await updateCompletedUpdateCheck(epoch, Date.now(), -2);
+        await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
       }
       return;
     }
     if(!updatedManga || updatedManga.length == 0) { // no updates found
-      await updateCompletedUpdateCheck(epoch, Date.now(), 0);
+      await updateCompletedUpdateCheck(epoch, Date.now(), 0, hitPageFetchLimit);
       return;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
-    await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length);
+    await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length, hitPageFetchLimit);
     await sendUserUpdatesPush(epoch);
   } catch (e) {
     console.error('Encountered error fetching updates', e);
-    catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2), 'Encountered error updating update check result');
+    catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2, false), 'Encountered error updating update check result');
   }
 }
 
