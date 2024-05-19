@@ -274,6 +274,11 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
         throw new Error(`Failed to parse JSON results for findUpdatedManagaDeep using the mangaId ${mangaId}`);
       }
 
+      // no chapters
+      if(!json.data || json.data.length == 0) {
+        continue;
+      }
+
       const chapter = json.data[0];
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.publishAt).getTime();
