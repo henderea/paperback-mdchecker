@@ -1,12 +1,12 @@
 import type { MangaInfo, UserPushUpdateResult } from 'lib/db';
 
-import { updateSchedule, titleUpdateSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
+import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
 import schedule from 'node-schedule';
 import got from 'got';
 import entities = require('entities');
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -20,6 +20,8 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
+
+const DEEP_CHECK_LIMIT: number = 20;
 
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
@@ -235,8 +237,94 @@ async function queryTitles(): Promise<void> {
   }
 }
 
+async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, mangaIds: string[] }> {
+  try {
+    const updatedManga: string[] = [];
+    const mangas: [string, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY);
+    const mangaIds: string[] = mangas?.map((m: [string, number]) => m[0]) ?? [];
+    if(!mangas || mangas.length == 0) { return { updatedManga, mangaIds }; }
+
+    for(const [mangaId, lastUpdate] of mangas) {
+      const url: string = new URLBuilder(MANGADEX_API)
+        .addPathComponent('chapter')
+        .addQueryParameter('limit', 1)
+        .addQueryParameter('manga', mangaId)
+        .addQueryParameter('order', { 'publishAt': 'desc' })
+        .addQueryParameter('translatedLanguage', ['en'])
+        .addQueryParameter('includeFutureUpdates', '0')
+        .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
+        .buildUrl();
+
+      const response = await got(url, {
+        headers: {
+          referer: `${MANGADEX_DOMAIN}/`
+        }
+      });
+
+      // If we have no content, there are no chapters available
+      if(response.statusCode == 204) {
+        continue;
+      }
+
+      const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
+      // console.log(`status code: ${response.statusCode}`);
+      // console.log('response:', json);
+
+      if(json.data === undefined) {
+        throw new Error(`Failed to parse JSON results for findUpdatedManagaDeep using the mangaId ${mangaId}`);
+      }
+
+      const chapter = json.data[0];
+      const pages: number = Number(chapter.attributes.pages);
+      const publishAt: number = new Date(chapter.publishAt).getTime();
+
+      if(pages > 0 && publishAt >= lastUpdate && !updatedManga.includes(mangaId)) {
+        updatedManga.push(mangaId);
+      }
+    }
+
+    return { updatedManga, mangaIds };
+  } catch (e) {
+    const rv: number | false = (e as any).response?.statusCode ?? false;
+    if(!rv) {
+      console.error('Encountered error deep fetching updates', e);
+    }
+    return { updatedManga: rv, mangaIds: [] };
+  }
+}
+
+async function queryUpdatesDeep(): Promise<void> {
+  const epoch: number = Date.now();
+  try {
+    const { updatedManga, mangaIds } = await findUpdatedMangaDeep(epoch);
+    if(!mangaIds || mangaIds.length == 0) { // no manga to check
+      return;
+    }
+    if(updatedManga === false) { // unknown error
+      return;
+    }
+    if(typeof updatedManga == 'number') { // failure status code
+      if(updatedManga === 503) { // service unavailable (MD probably down)
+        console.log('Got status code 503 (service unavailable) during deep update check');
+      } else { // other failure status code
+        console.log(`Got status code ${updatedManga} during deep update check`);
+      }
+      return;
+    }
+    await updateMangaRecordsForDeepQuery(mangaIds, epoch);
+    if(!updatedManga || updatedManga.length == 0) { // no updates found
+      return;
+    }
+    await updateMangaRecordsForQuery(updatedManga, epoch);
+    await sendUserUpdatesPush(epoch);
+  } catch (e) {
+    console.error('Encountered error deep fetching updates', e);
+  }
+}
+
 schedule.scheduleJob(updateSchedule, queryUpdates);
 schedule.scheduleJob(titleUpdateSchedule, queryTitles);
+schedule.scheduleJob(deepCheckSchedule, queryUpdatesDeep);
 
 shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)

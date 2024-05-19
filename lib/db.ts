@@ -142,8 +142,16 @@ export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Pr
   return result.rows.map((r) => r[0]);
 }
 
+export async function getDeepCheckMangaIds(limit: number, minCheck: number, maxDeepCheck: number): Promise<[string, number][] | null> {
+  const result: QueryResult<[string, number]> = await aQuery('select manga_id, last_update from user_manga where last_check >= $2 and greatest(last_update, last_deep_check) <= $3 group by manga_id order by min(greatest(last_update, last_deep_check)) asc, max(last_update) desc, max(last_check) desc, manga_id asc limit $1', [limit, minCheck, maxDeepCheck]);
+  if(resultEmpty(result)) {
+    return null;
+  }
+  return result.rows;
+}
+
 export async function getLatestUpdate(): Promise<number> {
-  const result: QueryResult<[number]> = await aQuery('select max(last_update) as latest_update from user_manga');
+  const result: QueryResult<[number]> = await aQuery('select max(last_update) as latest_update from user_manga where last_update != last_deep_check');
   if(resultEmpty(result)) {
     return -1;
   }
@@ -166,6 +174,10 @@ export declare interface MangaUpdateInfo extends MangaInfo {
 
 export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {
   await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
+}
+
+export async function updateMangaRecordsForDeepQuery(mangaIds: string[], epoch: number): Promise<void> {
+  await query('update user_manga set last_deep_check = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
 }
 
 export async function updateMangaTitles(mangas: MangaInfo[], epoch: number): Promise<void> {

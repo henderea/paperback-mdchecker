@@ -13,6 +13,7 @@ create table user_manga (
   last_update bigint,
   manga_title text,
   last_title_check bigint not null default 0,
+  last_deep_check bigint not null default 0,
   constraint pk_user_manga primary key (user_id, manga_id),
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );
@@ -23,6 +24,7 @@ create index ix_user_manga_uid_lcheck_lupdate on user_manga (user_id, last_check
 create index ix_user_manga_uid_mid_lcheck_lupdate on user_manga (user_id, manga_id, last_check, last_update);
 create index ix_user_manga_lupdate_lcheck on user_manga (last_update, last_check);
 create index ix_user_manga_ltitle_check_lupdate_lcheck_mid on user_manga (last_title_check, last_update, last_check, manga_id);
+create index ix_user_manga_ldeep_check_lupdate_lcheck_mid on user_manga (last_deep_check, last_update, last_check, manga_id);
 create index ix_user_manga_lcheck_mid on user_manga (last_check, manga_id);
 create index ix_user_manga_uid_mid_mtitle on user_manga (user_id, manga_id, manga_title);
 
