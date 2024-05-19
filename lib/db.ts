@@ -143,7 +143,7 @@ export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Pr
 }
 
 export async function getDeepCheckMangaIds(limit: number, minCheck: number, maxDeepCheck: number): Promise<[string, number][] | null> {
-  const result: QueryResult<[string, number]> = await aQuery('select manga_id, last_update from user_manga where last_check >= $2 and greatest(last_update, last_deep_check) <= $3 group by manga_id order by min(greatest(last_update, last_deep_check)) asc, max(last_update) desc, max(last_check) desc, manga_id asc limit $1', [limit, minCheck, maxDeepCheck]);
+  const result: QueryResult<[string, number]> = await aQuery('select manga_id, max(last_update) from user_manga where last_check >= $2 and greatest(last_update, last_deep_check) <= $3 group by manga_id order by min(greatest(last_update, last_deep_check)) asc, max(last_update) asc, max(last_check) desc, manga_id asc limit $1', [limit, minCheck, maxDeepCheck]);
   if(resultEmpty(result)) {
     return null;
   }
