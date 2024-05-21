@@ -240,7 +240,7 @@ async function queryTitles(): Promise<void> {
 async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, mangaIds: string[] }> {
   try {
     const updatedManga: string[] = [];
-    const mangas: [string, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY);
+    const mangas: [string, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
     const mangaIds: string[] = mangas?.map((m: [string, number]) => m[0]) ?? [];
     if(!mangas || mangas.length == 0) { return { updatedManga, mangaIds }; }
 
