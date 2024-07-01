@@ -21,7 +21,7 @@
     "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
   },
   "dependencies": {
-    "entities": "^4.5.0",
+    "entities": "^5.0.0",
     "express": "^4.19.2",
     "got": "^14.4.1",
     "html-minifier-terser": "^7.2.0",
