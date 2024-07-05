@@ -4,7 +4,7 @@ import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs
 
 import schedule from 'node-schedule';
 import got from 'got';
-import entities = require('entities');
+import { decode as decodeHTMLEntity } from 'html-entities';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
@@ -99,13 +99,6 @@ async function determineLatestUpdate(epoch: number): Promise<number> {
     return epoch - Duration.DAY;
   }
   return latestUpdate - Duration.MINUTE;
-}
-
-function decodeHTMLEntity(str: string | undefined): string | undefined {
-  if(str == undefined) {
-    return undefined;
-  }
-  return entities.decodeHTML(str);
 }
 
 async function sendUserUpdatesPush(epoch: number): Promise<void> {
