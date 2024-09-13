@@ -91,8 +91,8 @@ importers:
         specifier: ^8.57.0
         version: 8.57.0
       eslint-config-henderea:
-        specifier: ^1.1.52
-        version: 1.1.52(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-import@2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)(typescript@5.5.4)
+        specifier: ^1.1.53
+        version: 1.1.53(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-import@2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)(typescript@5.5.4)
       eslint-plugin-import:
         specifier: ^2.30.0
         version: 2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)
@@ -1794,8 +1794,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-henderea@1.1.52:
-    resolution: {integrity: sha512-eB7CvWNkp3qee1xkghe0CqH0J1in0A1j6GX86AfEvr23FU2UONf3Efxszsjko8hNI3ikymFBb6Mk8oqtHyQlPQ==}
+  eslint-config-henderea@1.1.53:
+    resolution: {integrity: sha512-a2Cv5MOvs4x/8JsfUs8lQkGuKtBOy4yoDJV8vvyrE123e9Qmn8rtzsgcWfwYmAIhOXOlG56tth4oWuQDTIQ1Ng==}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': ^7.18.0
       '@typescript-eslint/parser': ^7.18.0
@@ -5464,7 +5464,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-henderea@1.1.52(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-import@2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)(typescript@5.5.4):
+  eslint-config-henderea@1.1.53(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-import@2.30.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)(typescript@5.5.4):
     dependencies:
       '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0)(typescript@5.5.4)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.0)(typescript@5.5.4)
