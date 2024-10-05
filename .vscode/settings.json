@@ -19,4 +19,5 @@
     "source.fixAll.eslint": "always"
   },
   "editor.tabSize": 2,
+  "eslint.useFlatConfig": true,
 }
