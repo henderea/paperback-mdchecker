@@ -1,5 +1,5 @@
-@import './update-check.scss';
-@import './unknown-titles.scss';
+@use 'update-check.scss';
+@use 'unknown-titles.scss';
 
 body, html {
   margin: 0;
