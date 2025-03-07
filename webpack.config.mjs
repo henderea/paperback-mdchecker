@@ -17,7 +17,9 @@ const cacheVersionPrefix = mode == 'production' ? '' : 'dev-';
 const cacheVersion = `${cacheVersionPrefix}${cacheVersionNumber}`;
 const cache = {
   type: 'filesystem',
-  version: cacheVersion
+  version: cacheVersion,
+  idleTimeoutForInitialStore: 0,
+  idleTimeoutAfterLargeChanges: 0
 };
 
 const plugins = [
