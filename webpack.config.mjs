@@ -29,9 +29,9 @@ const plugins = [
 ];
 
 if(showProgress) {
-  plugins.push(new ProgressPlugin((percentage, message, ..._args) => {
+  plugins.push(new ProgressPlugin((percentage, message, ...args) => {
     let percentDisplay = `${Math.round(percentage * 100)}%`.padStart(4, ' ');
-    process.stdout.write(`${ansiEscapes.cursorLeft}${ansiEscapes.eraseLine} \u001B[1m${percentDisplay}\u001B[0m${message ? ` - ${message}` : ''}${ansiEscapes.cursorLeft}`);
+    process.stdout.write(`${ansiEscapes.cursorLeft}${ansiEscapes.eraseLine} \u001B[1m${percentDisplay}\u001B[0m${message ? ` - ${message}` : ''}${args.length >= 1 ? ` (${args[0]})` : ''}${ansiEscapes.cursorLeft}`);
   }));
 }
 
