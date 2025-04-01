@@ -21,7 +21,7 @@
     "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
   },
   "dependencies": {
-    "express": "^4.21.2",
+    "express": "^5.1.0",
     "got": "^14.4.7",
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
@@ -36,7 +36,7 @@
     "@babel/plugin-transform-typescript": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
     "@stylistic/eslint-plugin": "^4.2.0",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.1",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^22.13.17",
     "@types/node-schedule": "^2.1.7",
