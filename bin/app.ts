@@ -370,20 +370,26 @@ app.use(baseUrl, router);
 
 function startServerListen(): Server {
   if(expressSocketPath) { // using unix socket
-    return app.listen(expressSocketPath, () => {
-      if(!noStartStopLogs) {
+    return app.listen(expressSocketPath, (error?: any) => {
+      if(error) {
+        console.error(error);
+      } else if(!noStartStopLogs) {
         console.log(`Server running on unix socket ${expressSocketPath}`);
       }
     });
   } else if(expressHost && expressPort) { // using host & port
-    return app.listen(expressPort, expressHost, () => {
-      if(!noStartStopLogs) {
+    return app.listen(expressPort, expressHost, (error?: any) => {
+      if(error) {
+        console.error(error);
+      } else if(!noStartStopLogs) {
         console.log(`Server running on ${expressHost}:${expressPort}`);
       }
     });
   } else if(expressPort) { // using just port
-    return app.listen(expressPort, () => {
-      if(!noStartStopLogs) {
+    return app.listen(expressPort, (error?: any) => {
+      if(error) {
+        console.error(error);
+      } else if(!noStartStopLogs) {
         console.log(`Server running on port ${expressPort}`);
       }
     });
