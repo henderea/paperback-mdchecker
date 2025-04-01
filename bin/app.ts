@@ -373,6 +373,7 @@ function startServerListen(): Server {
     return app.listen(expressSocketPath, (error?: any) => {
       if(error) {
         console.error(error);
+        process.exit(1);
       } else if(!noStartStopLogs) {
         console.log(`Server running on unix socket ${expressSocketPath}`);
       }
@@ -381,6 +382,7 @@ function startServerListen(): Server {
     return app.listen(expressPort, expressHost, (error?: any) => {
       if(error) {
         console.error(error);
+        process.exit(1);
       } else if(!noStartStopLogs) {
         console.log(`Server running on ${expressHost}:${expressPort}`);
       }
@@ -389,6 +391,7 @@ function startServerListen(): Server {
     return app.listen(expressPort, (error?: any) => {
       if(error) {
         console.error(error);
+        process.exit(1);
       } else if(!noStartStopLogs) {
         console.log(`Server running on port ${expressPort}`);
       }
