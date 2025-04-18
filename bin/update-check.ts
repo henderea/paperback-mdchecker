@@ -47,7 +47,8 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       const response = await got(url, {
         headers: {
           referer: `${MANGADEX_DOMAIN}/`
-        }
+        },
+        decompress: true
       });
 
       // If we have no content, there are no updates available
@@ -171,7 +172,8 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
     const response = await got(url, {
       headers: {
         referer: `${MANGADEX_DOMAIN}/`
-      }
+      },
+      decompress: true
     });
 
     const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
@@ -251,7 +253,8 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
       const response = await got(url, {
         headers: {
           referer: `${MANGADEX_DOMAIN}/`
-        }
+        },
+        decompress: true
       });
 
       // If we have no content, there are no chapters available
