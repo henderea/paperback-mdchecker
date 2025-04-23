@@ -21,9 +21,11 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
 
+const CONTENT_RATINGS: string[] = ['safe', 'suggestive', 'erotica', 'pornographic'];
+
 const DEEP_CHECK_LIMIT: number = 100;
 const DEEP_CHECK_PAUSE_COUNT: number = 5;
-const DEEP_CHECK_PAUSE_TIME: number = Duration.SECONDS(2);
+const DEEP_CHECK_PAUSE_MILLIS: number = 500;
 
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
@@ -43,7 +45,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
         .addQueryParameter('order', { 'publishAt': 'desc' })
         .addQueryParameter('translatedLanguage', ['en'])
         .addQueryParameter('includeFutureUpdates', '0')
-        .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
+        .addQueryParameter('contentRating', CONTENT_RATINGS)
         .buildUrl();
 
       const response = await got(url, {
@@ -168,7 +170,7 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
       .addPathComponent('manga')
       .addQueryParameter('limit', PAGE_SIZE)
       .addQueryParameter('ids', mangaIds)
-      .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
+      .addQueryParameter('contentRating', CONTENT_RATINGS)
       .buildUrl();
 
     const response = await got(url, {
@@ -245,7 +247,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 
     for(const [mangaId, lastUpdate, lastDeepCheck] of mangas) {
       if(counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
-        await timeout(DEEP_CHECK_PAUSE_TIME);
+        await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
 
       counter++;
@@ -257,7 +259,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
         .addQueryParameter('order', { 'publishAt': 'desc' })
         .addQueryParameter('translatedLanguage', ['en'])
         .addQueryParameter('includeFutureUpdates', '0')
-        .addQueryParameter('contentRating', ['safe', 'suggestive', 'erotica', 'pornographic'])
+        .addQueryParameter('contentRating', CONTENT_RATINGS)
         .buildUrl();
 
       const response = await got(url, {
