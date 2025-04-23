@@ -68,3 +68,7 @@ export async function catchVoidError(p: Promise<void>, message: string): Promise
     console.error(message, e);
   }
 }
+
+export async function timeout(millis: number): Promise<void> {
+  await new Promise<void>((resolve) => { setTimeout(() => resolve(), millis); });
+}
