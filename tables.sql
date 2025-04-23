@@ -48,6 +48,15 @@ create table update_check (
 
 create index ix_update_check_cstart_time_ucount on update_check (check_start_time, update_count);
 
+create table deep_check (
+  check_start_time bigint not null,
+  check_end_time bigint,
+  update_count integer not null default 0,
+  constraint pk_deep_check primary key (check_start_time)
+);
+
+create index ix_deep_check_cstart_time_ucount on deep_check (check_start_time, update_count);
+
 create table failed_titles (
   manga_id text not null,
   last_failure bigint not null,

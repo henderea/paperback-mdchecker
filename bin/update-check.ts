@@ -6,7 +6,7 @@ import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -309,29 +309,37 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 async function queryUpdatesDeep(): Promise<void> {
   const epoch: number = Date.now();
   try {
+    await addDeepCheck(epoch);
     const { updatedManga, mangaIds } = await findUpdatedMangaDeep(epoch);
     if(!mangaIds || mangaIds.length == 0) { // no manga to check
+      await updateCompletedDeepCheck(epoch, Date.now(), -1);
       return;
     }
     if(updatedManga === false) { // unknown error
+      await updateCompletedDeepCheck(epoch, Date.now(), -2);
       return;
     }
     if(typeof updatedManga == 'number') { // failure status code
       if(updatedManga === 503) { // service unavailable (MD probably down)
         console.log('Got status code 503 (service unavailable) during deep update check');
+        await updateCompletedDeepCheck(epoch, Date.now(), -3);
       } else { // other failure status code
         console.log(`Got status code ${updatedManga} during deep update check`);
+        await updateCompletedDeepCheck(epoch, Date.now(), -2);
       }
       return;
     }
     await updateMangaRecordsForDeepQuery(mangaIds, epoch);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
+      await updateCompletedDeepCheck(epoch, Date.now(), 0);
       return;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
+    await updateCompletedDeepCheck(epoch, Date.now(), updatedManga.length);
     await sendUserUpdatesPush(epoch);
   } catch (e) {
     console.error('Encountered error deep fetching updates', e);
+    await updateCompletedDeepCheck(epoch, Date.now(), -2);
   }
 }
 
