@@ -124,7 +124,7 @@ export async function getLastUpdate(userId: string, mangaId: string): Promise<nu
 }
 
 export async function insertMangaRecord(userId: string, mangaId: string, epoch: number): Promise<void> {
-  await query('insert into user_manga (user_id, manga_id, last_check, last_update) values ($1, $2, $3, $4)', [userId, mangaId, epoch, 0]);
+  await query('insert into user_manga (user_id, manga_id, last_check, last_update, last_deep_check) values ($1, $2, $3, $4, $3)', [userId, mangaId, epoch, 0]);
 }
 
 export async function updateMangaRecordForCheck(userId: string, mangaId: string, epoch: number): Promise<void> {
