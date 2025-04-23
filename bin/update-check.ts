@@ -235,11 +235,11 @@ async function queryTitles(): Promise<void> {
 async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, mangaIds: string[] }> {
   try {
     const updatedManga: string[] = [];
-    const mangas: [string, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
-    const mangaIds: string[] = mangas?.map((m: [string, number]) => m[0]) ?? [];
+    const mangas: [string, number, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
+    const mangaIds: string[] = mangas?.map((m: [string, number, number]) => m[0]) ?? [];
     if(!mangas || mangas.length == 0) { return { updatedManga, mangaIds }; }
 
-    for(const [mangaId, lastUpdate] of mangas) {
+    for(const [mangaId, lastUpdate, lastDeepCheck] of mangas) {
       const url: string = new URLBuilder(MANGADEX_API)
         .addPathComponent('chapter')
         .addQueryParameter('limit', 1)
@@ -279,7 +279,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
 
-      if(pages > 0 && publishAt >= lastUpdate && !updatedManga.includes(mangaId)) {
+      if(pages > 0 && publishAt >= lastUpdate && publishAt >= lastDeepCheck && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
       }
     }
