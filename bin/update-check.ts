@@ -277,7 +277,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 
       const chapter = json.data[0];
       const pages: number = Number(chapter.attributes.pages);
-      const publishAt: number = new Date(chapter.publishAt).getTime();
+      const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
 
       if(pages > 0 && publishAt >= lastUpdate && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
