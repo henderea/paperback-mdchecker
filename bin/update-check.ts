@@ -12,7 +12,7 @@ import { URLBuilder } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration, catchVoidError, ensureInt, formatDuration } from 'lib/utils';
+import { Duration, catchVoidError, ensureInt, formatDuration, timeout } from 'lib/utils';
 import { Pushover } from 'lib/Pushover';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
@@ -21,7 +21,9 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
 
-const DEEP_CHECK_LIMIT: number = 20;
+const DEEP_CHECK_LIMIT: number = 100;
+const DEEP_CHECK_PAUSE_COUNT: number = 5;
+const DEEP_CHECK_PAUSE_TIME: number = Duration.SECONDS(2);
 
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
@@ -239,7 +241,15 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
     const mangaIds: string[] = mangas?.map((m: [string, number, number]) => m[0]) ?? [];
     if(!mangas || mangas.length == 0) { return { updatedManga, mangaIds }; }
 
+    let counter: number = 0;
+
     for(const [mangaId, lastUpdate, lastDeepCheck] of mangas) {
+      if(counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
+        await timeout(DEEP_CHECK_PAUSE_TIME);
+      }
+
+      counter++;
+
       const url: string = new URLBuilder(MANGADEX_API)
         .addPathComponent('chapter')
         .addQueryParameter('limit', 1)
