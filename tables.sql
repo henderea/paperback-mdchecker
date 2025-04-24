@@ -56,7 +56,8 @@ create index ix_update_check_cstart_time_ucount on update_check (check_start_tim
 create or replace view update_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
-         case when check_end_time is null then null else check_end_time - check_start_time end as check_duration,
+         case when check_end_time is null then null else ((check_end_time - check_start_time) || 'ms')::interval end as check_duration,
+         case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
          update_count,
          hit_page_fetch_limit
   from update_check;
@@ -75,7 +76,8 @@ create index ix_deep_check_cstart_time_ccount on deep_check (check_start_time, c
 create or replace view deep_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
-         case when check_end_time is null then null else check_end_time - check_start_time end as check_duration,
+         case when check_end_time is null then null else ((check_end_time - check_start_time) || 'ms')::interval end as check_duration,
+         case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
          update_count,
          check_count,
          case when check_count <= 0 then null else round((check_end_time - check_start_time)::numeric / check_count::numeric, 1) end as avg_check_time,
