@@ -80,8 +80,8 @@ create or replace view deep_check_view as
          case when check_end_time is null then null else ((check_end_time - check_start_time) || 'ms')::interval end as check_duration,
          update_count,
          check_count,
-         case when check_count <= 0 then null else round((check_end_time - check_start_time)::numeric / check_count::numeric, 1) end as avg_check_time,
-         case when check_count <= 0 then null else round((check_count::numeric * 1000.0) / (check_end_time - check_start_time)::numeric, 2) end as checks_per_second
+         case when check_count <= 0 or check_end_time is null then null else round((check_end_time - check_start_time)::numeric / check_count::numeric, 1) end as avg_check_time,
+         case when check_count <= 0 or check_end_time is null then null else round((check_count::numeric * 1000.0) / (check_end_time - check_start_time)::numeric, 2) end as checks_per_second
   from deep_check;
 
 create table failed_titles (

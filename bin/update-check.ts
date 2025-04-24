@@ -6,7 +6,7 @@ import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateInProgressDeepCheck, updateCompletedUpdateCheck, addDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -24,8 +24,9 @@ const PAGE_SIZE: number = 100;
 const CONTENT_RATINGS: string[] = ['safe', 'suggestive', 'erotica', 'pornographic'];
 
 const DEEP_CHECK_LIMIT: number = 600;
+const DEEP_CHECK_REFRESH_COUNT: number = 10;
 const DEEP_CHECK_PAUSE_COUNT: number = 5;
-const DEEP_CHECK_PAUSE_MILLIS: number = 200;
+const DEEP_CHECK_PAUSE_MILLIS: number = 100;
 
 const DEEP_CHECK_PAUSE_ENABLED: boolean = DEEP_CHECK_PAUSE_COUNT > 0 && DEEP_CHECK_PAUSE_MILLIS > 0;
 
@@ -249,6 +250,10 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
     let counter: number = 0;
 
     for(const [mangaId, lastUpdate, lastDeepCheck, lastDeepCheckFind] of mangas) {
+      if(counter > 0 && counter % DEEP_CHECK_REFRESH_COUNT == 0) {
+        await updateInProgressDeepCheck(epoch, checkedManga.length);
+      }
+      updateInProgressDeepCheck(epoch, checkedManga.length);
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }

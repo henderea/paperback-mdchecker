@@ -201,6 +201,10 @@ export async function updateCompletedDeepCheck(startEpoch: number, endEpoch: num
   await query('update deep_check set check_end_time = $2, update_count = $3, check_count = $4 where check_start_time = $1', [startEpoch, endEpoch, updateCount, checkCount]);
 }
 
+export async function updateInProgressDeepCheck(startEpoch: number, checkCount: number): Promise<void> {
+  await query('update deep_check set check_count = $2 where check_start_time = $1', [startEpoch, checkCount]);
+}
+
 export declare interface UserPushUpdateResult {
   count: number;
   user_id: string;
