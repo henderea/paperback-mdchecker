@@ -238,16 +238,16 @@ async function queryTitles(): Promise<void> {
   }
 }
 
-async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, mangaIds: string[] }> {
+async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, checkedManga: [string, number][] }> {
   try {
     const updatedManga: string[] = [];
-    const mangas: [string, number, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
-    const mangaIds: string[] = mangas?.map((m: [string, number, number]) => m[0]) ?? [];
-    if(!mangas || mangas.length == 0) { return { updatedManga, mangaIds }; }
+    const mangas: [string, number, number, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
+    const checkedManga: [string, number][] = [];
+    if(!mangas || mangas.length == 0) { return { updatedManga, checkedManga }; }
 
     let counter: number = 0;
 
-    for(const [mangaId, lastUpdate, _lastDeepCheck] of mangas) {
+    for(const [mangaId, lastUpdate, lastDeepCheck, lastDeepCheckFind] of mangas) {
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
@@ -261,6 +261,8 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
         .addQueryParameter('order', { 'publishAt': 'desc' })
         .addQueryParameter('translatedLanguage', ['en'])
         .addQueryParameter('includeFutureUpdates', '0')
+        .addQueryParameter('includeEmptyPages', '0')
+        .addQueryParameter('includeExternalUrl', '0')
         .addQueryParameter('contentRating', CONTENT_RATINGS)
         .buildUrl();
 
@@ -273,6 +275,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 
       // If we have no content, there are no chapters available
       if(response.statusCode == 204) {
+        checkedManga.push([mangaId, lastDeepCheckFind]);
         continue;
       }
 
@@ -286,25 +289,28 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 
       // no chapters
       if(!json.data || json.data.length == 0) {
+        checkedManga.push([mangaId, lastDeepCheckFind]);
         continue;
       }
 
       const chapter = json.data[0];
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
+      checkedManga.push([mangaId, pages > 0 ? publishAt : lastDeepCheckFind]);
+      const minPublish: number = lastUpdate == lastDeepCheck ? lastDeepCheckFind : lastUpdate;
 
-      if(pages > 0 && publishAt >= lastUpdate && !updatedManga.includes(mangaId)) {
+      if(pages > 0 && publishAt >= minPublish && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
       }
     }
 
-    return { updatedManga, mangaIds };
+    return { updatedManga, checkedManga };
   } catch (e) {
     const rv: number | false = (e as any).response?.statusCode ?? false;
     if(!rv) {
       console.error('Encountered error deep fetching updates', e);
     }
-    return { updatedManga: rv, mangaIds: [] };
+    return { updatedManga: rv, checkedManga: [] };
   }
 }
 
@@ -312,8 +318,8 @@ async function queryUpdatesDeep(): Promise<void> {
   const epoch: number = Date.now();
   try {
     await addDeepCheck(epoch);
-    const { updatedManga, mangaIds } = await findUpdatedMangaDeep(epoch);
-    if(!mangaIds || mangaIds.length == 0) { // no manga to check
+    const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch);
+    if(!checkedManga || checkedManga.length == 0) { // no manga to check
       await updateCompletedDeepCheck(epoch, Date.now(), -1, 0);
       return;
     }
@@ -331,13 +337,13 @@ async function queryUpdatesDeep(): Promise<void> {
       }
       return;
     }
-    await updateMangaRecordsForDeepQuery(mangaIds, epoch);
+    await updateMangaRecordsForDeepQuery(checkedManga, epoch);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
-      await updateCompletedDeepCheck(epoch, Date.now(), 0, mangaIds.length);
+      await updateCompletedDeepCheck(epoch, Date.now(), 0, checkedManga.length);
       return;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
-    await updateCompletedDeepCheck(epoch, Date.now(), updatedManga.length, mangaIds.length);
+    await updateCompletedDeepCheck(epoch, Date.now(), updatedManga.length, checkedManga.length);
     await sendUserUpdatesPush(epoch);
   } catch (e) {
     console.error('Encountered error deep fetching updates', e);
