@@ -25,7 +25,7 @@ const CONTENT_RATINGS: string[] = ['safe', 'suggestive', 'erotica', 'pornographi
 
 const DEEP_CHECK_LIMIT: number = 400;
 const DEEP_CHECK_PAUSE_COUNT: number = 5;
-const DEEP_CHECK_PAUSE_MILLIS: number = 500;
+const DEEP_CHECK_PAUSE_MILLIS: number = 200;
 
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
