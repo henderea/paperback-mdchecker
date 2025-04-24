@@ -48,6 +48,14 @@ create table update_check (
 
 create index ix_update_check_cstart_time_ucount on update_check (check_start_time, update_count);
 
+create or replace view update_check_view as
+  select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
+         case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
+         case when check_end_time is null then null else check_end_time - check_start_time end as check_duration,
+         update_count,
+         hit_page_fetch_limit
+  from update_check;
+
 create table deep_check (
   check_start_time bigint not null,
   check_end_time bigint,
@@ -56,6 +64,13 @@ create table deep_check (
 );
 
 create index ix_deep_check_cstart_time_ucount on deep_check (check_start_time, update_count);
+
+create or replace view deep_check_view as
+  select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
+         case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
+         case when check_end_time is null then null else check_end_time - check_start_time end as check_duration,
+         update_count
+  from deep_check;
 
 create table failed_titles (
   manga_id text not null,
