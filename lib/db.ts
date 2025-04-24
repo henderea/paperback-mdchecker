@@ -172,7 +172,7 @@ export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: numb
 export async function updateMangaRecordsForDeepQuery(checkedManga: [string, number][], epoch: number): Promise<void> {
   for(let i = 0; i < checkedManga.length; i++) {
     const [mangaId, deepCheckFind]: [string, number] = checkedManga[i];
-    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3,  where manga_id = $1', [mangaId, epoch, deepCheckFind]);
+    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3 where manga_id = $1', [mangaId, epoch, deepCheckFind]);
   }
 }
 
