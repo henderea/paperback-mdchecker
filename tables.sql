@@ -60,16 +60,19 @@ create table deep_check (
   check_start_time bigint not null,
   check_end_time bigint,
   update_count integer not null default 0,
+  check_count integer not null default 0,
   constraint pk_deep_check primary key (check_start_time)
 );
 
 create index ix_deep_check_cstart_time_ucount on deep_check (check_start_time, update_count);
+create index ix_deep_check_cstart_time_ccount on deep_check (check_start_time, check_count);
 
 create or replace view deep_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
          case when check_end_time is null then null else check_end_time - check_start_time end as check_duration,
-         update_count
+         update_count,
+         check_count
   from deep_check;
 
 create table failed_titles (

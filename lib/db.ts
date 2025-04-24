@@ -190,8 +190,8 @@ export async function addDeepCheck(epoch: number): Promise<void> {
   await query('insert into deep_check (check_start_time) values ($1)', [epoch]);
 }
 
-export async function updateCompletedDeepCheck(startEpoch: number, endEpoch: number, count: number): Promise<void> {
-  await query('update deep_check set check_end_time = $2, update_count = $3 where check_start_time = $1', [startEpoch, endEpoch, count]);
+export async function updateCompletedDeepCheck(startEpoch: number, endEpoch: number, updateCount: number, checkCount: number): Promise<void> {
+  await query('update deep_check set check_end_time = $2, update_count = $3, check_count = $4 where check_start_time = $1', [startEpoch, endEpoch, updateCount, checkCount]);
 }
 
 export declare interface UserPushUpdateResult {
