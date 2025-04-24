@@ -27,6 +27,8 @@ const DEEP_CHECK_LIMIT: number = 400;
 const DEEP_CHECK_PAUSE_COUNT: number = 5;
 const DEEP_CHECK_PAUSE_MILLIS: number = 200;
 
+const DEEP_CHECK_PAUSE_ENABLED: boolean = DEEP_CHECK_PAUSE_COUNT > 0 && DEEP_CHECK_PAUSE_MILLIS > 0;
+
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
@@ -246,7 +248,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
     let counter: number = 0;
 
     for(const [mangaId, lastUpdate, lastDeepCheck] of mangas) {
-      if(counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
+      if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
 
