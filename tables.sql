@@ -62,6 +62,23 @@ create or replace view update_check_view as
          hit_page_fetch_limit
   from update_check;
 
+create table title_check (
+  check_start_time bigint not null,
+  check_end_time bigint,
+  check_count integer not null default 0,
+  constraint pk_title_check primary key (check_start_time)
+);
+
+create index ix_title_check_cstart_time_ccount on title_check (check_start_time, check_count);
+
+create or replace view title_check_view as
+  select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
+         case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
+         case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
+         case when check_end_time is null then null else ((check_end_time - check_start_time) || 'ms')::interval end as check_duration,
+         check_count
+  from title_check;
+
 create table deep_check (
   check_start_time bigint not null,
   check_end_time bigint,

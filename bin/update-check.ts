@@ -6,7 +6,7 @@ import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateInProgressDeepCheck, updateCompletedUpdateCheck, addDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
 import { URLBuilder } from 'lib/UrlBuilder';
 
@@ -210,6 +210,7 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
 async function queryTitles(): Promise<void> {
   const epoch: number = Date.now();
   try {
+    await addTitleCheck(epoch);
     const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, epoch - Duration.DAYS(2));
     if(mangaIds && mangaIds.length > 0) {
       const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(mangaIds);
@@ -232,11 +233,13 @@ async function queryTitles(): Promise<void> {
         await cleanFailedTitles(mangaIds);
         await addFailedTitles(mangaIds, epoch);
       }
+      updateCompletedTitleCheck(epoch, Date.now(), mangas.length);
     } else {
-      // console.log(`No titles found to update after ${formatDuration(Date.now() - start)}`);
+      updateCompletedTitleCheck(epoch, Date.now(), -1);
     }
   } catch (e) {
     console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - epoch)}`, e);
+    updateCompletedTitleCheck(epoch, Date.now(), -2);
   }
 }
 
