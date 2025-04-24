@@ -111,8 +111,8 @@ export async function getUserUpdateCount(userId: string, latestCheck: number): P
 }
 
 export async function getUserUpdates(userId: string, latestCheck: number): Promise<MangaUpdateInfo[]> {
-  const results: Array<[string, string | null, string | null, number]> | null = await laQuery('select manga_id, manga_title, manga_status, last_update from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by last_update, manga_title, manga_id', [userId, latestCheck]);
-  return results?.map(([id, title, status, lastUpdate]) => ({ id, title: title ?? null, status: status ?? null, lastUpdate: ensureInt(lastUpdate) })) ?? [];
+  const results: Array<[string, string | null, number]> | null = await laQuery('select manga_id, manga_title, last_update from user_manga where user_id = $1 and last_check > $2 and last_update > last_check order by last_update, manga_title, manga_id', [userId, latestCheck]);
+  return results?.map(([id, title, lastUpdate]) => ({ id, title: title ?? null, lastUpdate: ensureInt(lastUpdate) })) ?? [];
 }
 
 export async function getUserChecks(userId: string, latestCheck: number): Promise<number> {
@@ -150,12 +150,15 @@ export async function getLatestUpdate(): Promise<number> {
 export declare interface MangaInfo {
   id: string;
   title: string | null;
-  status: string | null;
 }
 
 export declare interface TitledMangaInfo {
   manga_id: string;
   manga_title: string;
+}
+
+export declare interface MangaTitleCheckInfo extends MangaInfo {
+  status: string | null;
 }
 
 export declare interface MangaUpdateInfo extends MangaInfo {
@@ -173,9 +176,9 @@ export async function updateMangaRecordsForDeepQuery(checkedManga: [string, numb
   }
 }
 
-export async function updateMangaTitles(mangas: MangaInfo[], epoch: number): Promise<void> {
+export async function updateMangaTitles(mangas: MangaTitleCheckInfo[], epoch: number): Promise<void> {
   for(let i = 0; i < mangas.length; i++) {
-    const manga: MangaInfo = mangas[i];
+    const manga: MangaTitleCheckInfo = mangas[i];
     if(manga.title) {
       await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4 where manga_id = $1', [manga.id, manga.title, manga.status, epoch]);
     }

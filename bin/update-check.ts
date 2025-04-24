@@ -1,4 +1,4 @@
-import type { MangaInfo, UserPushUpdateResult } from 'lib/db';
+import type { MangaTitleCheckInfo, UserPushUpdateResult } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
@@ -162,12 +162,12 @@ async function queryUpdates(): Promise<void> {
   }
 }
 
-async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
+async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleCheckInfo[]> {
   if(mangaIds.length > PAGE_SIZE) {
     mangaIds = mangaIds.slice(0, PAGE_SIZE);
   }
   try {
-    const mangas: MangaInfo[] = [];
+    const mangas: MangaTitleCheckInfo[] = [];
     const url: string = new URLBuilder(MANGADEX_API)
       .addPathComponent('manga')
       .addQueryParameter('limit', PAGE_SIZE)
@@ -211,7 +211,7 @@ async function queryTitles(): Promise<void> {
   try {
     const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, start - Duration.DAYS(2));
     if(mangaIds && mangaIds.length > 0) {
-      const mangas: MangaInfo[] = await getMangaInfo(mangaIds);
+      const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(mangaIds);
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, start);
         // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
