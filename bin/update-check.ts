@@ -207,13 +207,13 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
 }
 
 async function queryTitles(): Promise<void> {
-  const start: number = Date.now();
+  const epoch: number = Date.now();
   try {
-    const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, start - Duration.DAYS(2));
+    const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, epoch - Duration.DAYS(2));
     if(mangaIds && mangaIds.length > 0) {
       const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(mangaIds);
       if(mangas && mangas.length > 0) {
-        await updateMangaTitles(mangas, start);
+        await updateMangaTitles(mangas, epoch);
         // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
         await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
@@ -222,20 +222,20 @@ async function queryTitles(): Promise<void> {
           const missingCount: number = missingIds.length;
           if(missingCount > 0) {
             console.log(`Failed title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
-            await addFailedTitles(missingIds, start);
+            await addFailedTitles(missingIds, epoch);
           }
         }
       } else {
-        console.log(`No titles were able to be fetched after ${formatDuration(Date.now() - start)}`);
+        console.log(`No titles were able to be fetched after ${formatDuration(Date.now() - epoch)}`);
         console.log(`Failed title update on ${mangaIds.length} title${mangaIds.length == 1 ? '' : 's'}:\n${mangaIds.join('\n')}`);
         await cleanFailedTitles(mangaIds);
-        await addFailedTitles(mangaIds, start);
+        await addFailedTitles(mangaIds, epoch);
       }
     } else {
       // console.log(`No titles found to update after ${formatDuration(Date.now() - start)}`);
     }
   } catch (e) {
-    console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - start)}`, e);
+    console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - epoch)}`, e);
   }
 }
 
