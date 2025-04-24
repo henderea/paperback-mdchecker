@@ -247,7 +247,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
 
     let counter: number = 0;
 
-    for(const [mangaId, lastUpdate, lastDeepCheck] of mangas) {
+    for(const [mangaId, lastUpdate, _lastDeepCheck] of mangas) {
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
@@ -293,7 +293,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
 
-      if(pages > 0 && publishAt >= lastUpdate && publishAt >= lastDeepCheck && !updatedManga.includes(mangaId)) {
+      if(pages > 0 && publishAt >= lastUpdate && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
       }
     }
