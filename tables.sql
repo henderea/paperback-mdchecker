@@ -12,6 +12,7 @@ create table user_manga (
   last_check bigint,
   last_update bigint,
   manga_title text,
+  manga_status text,
   last_title_check bigint not null default 0,
   last_deep_check bigint not null default 0,
   last_deep_check_find bigint not null default 0,
@@ -28,6 +29,7 @@ create index ix_user_manga_ltitle_check_lupdate_lcheck_mid on user_manga (last_t
 create index ix_user_manga_ldeep_check_lupdate_lcheck_mid on user_manga (last_deep_check, last_update, last_check, manga_id);
 create index ix_user_manga_lcheck_mid on user_manga (last_check, manga_id);
 create index ix_user_manga_uid_mid_mtitle on user_manga (user_id, manga_id, manga_title);
+create index ix_user_manga_mstatus_mid_mtitle on user_manga (manga_status, manga_id, manga_title);
 
 create or replace view user_manga_view as
   select user_id,
@@ -35,6 +37,7 @@ create or replace view user_manga_view as
          case when last_check = 0 then null else timezone('US/Eastern', to_timestamp(last_check / 1000.0)) end as last_check,
          case when last_update = 0 then null else timezone('US/Eastern', to_timestamp(last_update / 1000.0)) end as last_update,
          manga_title,
+         manga_status,
          case when last_title_check = 0 then null else timezone('US/Eastern', to_timestamp(last_title_check / 1000.0)) end as last_title_check,
          case when last_deep_check = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check / 1000.0)) end as last_deep_check,
          case when last_deep_check_find = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check_find / 1000.0)) end as last_deep_check_find

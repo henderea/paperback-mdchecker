@@ -195,13 +195,14 @@ async function getMangaInfo(mangaIds: string[]): Promise<MangaInfo[]> {
       const mangaDetails = manga.attributes;
       const titles = <string[]>([...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))].map((x: string) => decodeHTMLEntity(x)).filter((x) => x));
       const title = titles.find((t) => /[a-zA-Z]/.test(t)) ?? titles[0] ?? null;
+      const status: string = mangaDetails.status;
       // const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => x.en ?? Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-      mangas.push({ id, title });
+      mangas.push({ id, title, status });
     }
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null }));
+    return mangaIds.map((id) => ({ id, title: null, status: null }));
   }
 }
 
