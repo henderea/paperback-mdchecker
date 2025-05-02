@@ -421,6 +421,7 @@ schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
 ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
+ipc.config.silent = true;
 ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;

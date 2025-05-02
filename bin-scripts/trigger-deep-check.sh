@@ -2,4 +2,5 @@
 
 cd "$(dirname "$0")"
 
-pnpm run trigger:deep-check || exit $?
+tsNode="$(pnpm bin)/ts-node"
+"$tsNode" ./bin/cli.ts deep-check || exit $?

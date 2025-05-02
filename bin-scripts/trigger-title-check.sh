@@ -2,4 +2,5 @@
 
 cd "$(dirname "$0")"
 
-pnpm run trigger:title-check || exit $?
+tsNode="$(pnpm bin)/ts-node"
+"$tsNode" ./bin/cli.ts title-check || exit $?

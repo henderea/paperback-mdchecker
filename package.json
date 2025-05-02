@@ -18,9 +18,7 @@
     "build:app": "./scripts/ncc-build-release.sh app",
     "build:update-check": "./scripts/ncc-build-release.sh update-check",
     "build:wp": "NODE_ENV=production webpack",
-    "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check",
-    "trigger:title-check": "ts-node ./bin/cli.ts title-check",
-    "trigger:deep-check": "ts-node ./bin/cli.ts deep-check"
+    "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
   },
   "dependencies": {
     "express": "^5.1.0",
