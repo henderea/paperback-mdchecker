@@ -32,7 +32,7 @@ function doExit(message: string | null = null): void {
   process.exit(0);
 }
 
-ipc.connectTo('mdcUpdateCheck', () => {
+ipc.connectTo('mdcUpdateChecker', () => {
   ipc.of.mdcUpdateChecker.on('connect', () => {
     ipc.of.mdcUpdateChecker.emit('trigger', command);
   })
