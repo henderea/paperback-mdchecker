@@ -423,7 +423,7 @@ schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
 ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
-// ipc.config.silent = true;
+ipc.config.silent = true;
 // ipc.config.logDepth = 1;
 // ipc.config.unlink = false;
 ipc.config.logInColor = false;
@@ -431,7 +431,7 @@ ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
 ipc.serve(() => {
-  console.log(`IPC started up (${process.pid})`);
+  // console.log(`IPC started up (${process.pid})`);
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
   }).on('trigger', async (command: string, socket: Socket) => {
@@ -468,7 +468,7 @@ ipc.serve(() => {
 
 const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
 
-const MAX_TURNS = 10;
+const MAX_TURNS = 30;
 
 (async () => {
   let turns: number = 0;
@@ -488,9 +488,9 @@ const MAX_TURNS = 10;
 })();
 
 shutdownHandler()
-  .logIf(`SIGINT signal received (${process.pid}); shutting down`, true)
+  .logIf(`SIGINT signal received (${process.pid}); shutting down`, !noStartStopLogs)
   .thenDo(ipc.server.stop)
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
-  .thenLogIf(`Shutdown complete (${process.pid})`, true)
+  .thenLogIf(`Shutdown complete (${process.pid})`, !noStartStopLogs)
   .thenExit(0);
