@@ -1,3 +1,5 @@
+import type { Socket } from 'node:net';
+
 import type { MangaTitleCheckInfo, UserPushUpdateResult } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
@@ -5,6 +7,8 @@ import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs
 import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
+
+import ipc from 'node-ipc';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
@@ -125,41 +129,58 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
   }
 }
 
-async function queryUpdates(): Promise<void> {
+let queryingUpdates: boolean = false;
+
+async function queryUpdates(): Promise<number | false> {
+  if(queryingUpdates) {
+    console.log('Already doing update check');
+    return false;
+  }
+  queryingUpdates = true;
   const epoch: number = Date.now();
   try {
     await addUpdateCheck(epoch);
     const mangaIds: string[] | null = await getMangaIdsForQuery(epoch - Duration.WEEK);
     if(!mangaIds) { // no manga fetched by the app recently
       await updateCompletedUpdateCheck(epoch, Date.now(), -1, false);
-      return;
+      queryingUpdates = false;
+      return -1;
     }
     const latestUpdate: number = await determineLatestUpdate(epoch);
     const { updatedManga, hitPageFetchLimit } = await findUpdatedManga(mangaIds, latestUpdate);
     if(updatedManga === false) { // unknown error
       await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
-      return;
+      queryingUpdates = false;
+      return -2;
     }
     if(typeof updatedManga == 'number') { // failure status code
       if(updatedManga === 503) { // service unavailable (MD probably down)
         console.log('Got status code 503 (service unavailable) during update check');
         await updateCompletedUpdateCheck(epoch, Date.now(), -3, hitPageFetchLimit);
+        queryingUpdates = false;
+        return -3;
       } else { // other failure status code
         console.log(`Got status code ${updatedManga} during update check`);
         await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
+        queryingUpdates = false;
+        return -2;
       }
-      return;
     }
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       await updateCompletedUpdateCheck(epoch, Date.now(), 0, hitPageFetchLimit);
-      return;
+      queryingUpdates = false;
+      return 0;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedUpdateCheck(epoch, Date.now(), updatedManga.length, hitPageFetchLimit);
     await sendUserUpdatesPush(epoch);
+    queryingUpdates = false;
+    return updatedManga.length;
   } catch (e) {
     console.error('Encountered error fetching updates', e);
-    catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2, false), 'Encountered error updating update check result');
+    await catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2, false), 'Encountered error updating update check result');
+    queryingUpdates = false;
+    return -2;
   }
 }
 
@@ -209,7 +230,14 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
   }
 }
 
-async function queryTitles(): Promise<void> {
+let queryingTitles: boolean = false;
+
+async function queryTitles(): Promise<number | false> {
+  if(queryingTitles) {
+    console.log('Already doing title check');
+    return false;
+  }
+  queryingTitles = true;
   const epoch: number = Date.now();
   try {
     await addTitleCheck(epoch);
@@ -235,17 +263,23 @@ async function queryTitles(): Promise<void> {
         await cleanFailedTitles(mangaIds);
         await addFailedTitles(mangaIds, epoch);
       }
-      updateCompletedTitleCheck(epoch, Date.now(), mangas.length);
+      await updateCompletedTitleCheck(epoch, Date.now(), mangas.length);
+      queryingTitles = false;
+      return mangas.length;
     } else {
-      updateCompletedTitleCheck(epoch, Date.now(), -1);
+      await updateCompletedTitleCheck(epoch, Date.now(), -1);
+      queryingTitles = false;
+      return -1;
     }
   } catch (e) {
     console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - epoch)}`, e);
-    updateCompletedTitleCheck(epoch, Date.now(), -2);
+    await catchVoidError(updateCompletedTitleCheck(epoch, Date.now(), -2), 'Encountered error updating title check result');
+    queryingTitles = false;
+    return -2;
   }
 }
 
-async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, checkedManga: [string, number][] }> {
+async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: [string, number][] }> {
   try {
     const updatedManga: string[] = [];
     const mangas: [string, number, number, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
@@ -257,6 +291,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
     for(const [mangaId, lastUpdate, lastDeepCheck, lastDeepCheckFind] of mangas) {
       if(counter > 0 && counter % DEEP_CHECK_REFRESH_COUNT == 0) {
         await updateInProgressDeepCheck(epoch, checkedManga.length);
+        statusHandler(counter, mangas.length);
       }
       updateInProgressDeepCheck(epoch, checkedManga.length);
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
@@ -325,50 +360,110 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
   }
 }
 
-async function queryUpdatesDeep(): Promise<void> {
+let queryingUpdatesDeep: boolean = false;
+
+async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => void = () => {}): Promise<false | number> {
+  if(queryingUpdatesDeep) {
+    console.log('Already doing deep update check');
+    return false;
+  }
+  queryingUpdatesDeep = true;
   const epoch: number = Date.now();
   try {
     await addDeepCheck(epoch);
-    const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch);
+    const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch, statusHandler);
     if(!checkedManga || checkedManga.length == 0) { // no manga to check
       await updateCompletedDeepCheck(epoch, Date.now(), -1, 0);
-      return;
+      queryingUpdatesDeep = false;
+      return -1;
     }
     if(updatedManga === false) { // unknown error
       await updateCompletedDeepCheck(epoch, Date.now(), -2, -1);
-      return;
+      queryingUpdatesDeep = false;
+      return -2;
     }
     if(typeof updatedManga == 'number') { // failure status code
       if(updatedManga === 503) { // service unavailable (MD probably down)
         console.log('Got status code 503 (service unavailable) during deep update check');
         await updateCompletedDeepCheck(epoch, Date.now(), -3, -1);
+        queryingUpdatesDeep = false;
+        return -3;
       } else { // other failure status code
         console.log(`Got status code ${updatedManga} during deep update check`);
         await updateCompletedDeepCheck(epoch, Date.now(), -2, -1);
+        queryingUpdatesDeep = false;
+        return -2;
       }
-      return;
     }
     await updateMangaRecordsForDeepQuery(checkedManga, epoch);
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       await updateCompletedDeepCheck(epoch, Date.now(), 0, checkedManga.length);
-      return;
+      queryingUpdatesDeep = false;
+      return 0;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedDeepCheck(epoch, Date.now(), updatedManga.length, checkedManga.length);
     await sendUserUpdatesPush(epoch);
+    queryingUpdatesDeep = false;
+    return checkedManga.length;
   } catch (e) {
     console.error('Encountered error deep fetching updates', e);
-    await updateCompletedDeepCheck(epoch, Date.now(), -2, -1);
+    await catchVoidError(updateCompletedDeepCheck(epoch, Date.now(), -2, -1), 'Encountered error updating deep check result');
+    queryingUpdatesDeep = false;
+    return -2;
   }
 }
 
-schedule.scheduleJob(updateSchedule, queryUpdates);
-schedule.scheduleJob(titleUpdateSchedule, queryTitles);
-schedule.scheduleJob(deepCheckSchedule, queryUpdatesDeep);
+schedule.scheduleJob(updateSchedule, () => { queryUpdates(); });
+schedule.scheduleJob(titleUpdateSchedule, () => { queryTitles(); });
+schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
+
+ipc.config.id = 'mdchecker-update-check-daemon';
+ipc.config.retry = 1500;
+ipc.config.sync = false;
+ipc.config.logInColor = false;
+ipc.config.writableAll = true;
+ipc.config.readableAll = true;
+
+ipc.serve(() => {
+  ipc.server.on('trigger', async (command: string, socket: Socket) => {
+    if(command === 'title-check') {
+      const rv: number | false = await queryTitles();
+      if(rv === false) {
+        ipc.server.emit(socket, 'already-running');
+      } else if(rv === -1) {
+        ipc.server.emit(socket, 'no-items');
+      } else if(rv < 0) {
+        ipc.server.emit(socket, 'failure', String(rv));
+      } else {
+        ipc.server.emit(socket, 'success', String(rv));
+      }
+    } else if(command === 'deep-check') {
+      const rv: number | false = await queryUpdatesDeep((cur: number, total: number) => {
+        const len: number = String(total).length;
+        ipc.server.emit(socket, 'progress', `${String(cur).padStart(len)}/${total} (${Math.round((cur * 1000.0) / total) / 10.0}%)`);
+      });
+      if(rv === false) {
+        ipc.server.emit(socket, 'already-running');
+      } else if(rv === -1) {
+        ipc.server.emit(socket, 'no-items');
+      } else if(rv < 0) {
+        ipc.server.emit(socket, 'failure', String(rv));
+      } else {
+        ipc.server.emit(socket, 'success', String(rv));
+      }
+    } else {
+      ipc.server.emit(socket, 'unsupported');
+    }
+  });
+});
+
+ipc.server.start();
 
 shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
   .thenDo(schedule.gracefulShutdown)
+  .thenDo(ipc.server.stop)
   .thenDo(shutdownClient)
   .thenLogIf('Shutdown complete', !noStartStopLogs)
   .thenExit(0);

@@ -18,7 +18,9 @@
     "build:app": "./scripts/ncc-build-release.sh app",
     "build:update-check": "./scripts/ncc-build-release.sh update-check",
     "build:wp": "NODE_ENV=production webpack",
-    "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
+    "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check",
+    "trigger:title-check": "ts-node ./bin/cli.ts title-check",
+    "trigger:deep-check": "ts-node ./bin/cli.ts deep-check"
   },
   "dependencies": {
     "express": "^5.1.0",
@@ -26,9 +28,11 @@
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
     "http-terminator": "^3.2.0",
+    "node-ipc": "^12.0.0",
     "node-schedule": "^2.1.1",
     "nunjucks": "^3.2.4",
-    "pg": "^8.15.6"
+    "pg": "^8.15.6",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
@@ -39,6 +43,7 @@
     "@types/express": "^5.0.1",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^22.15.3",
+    "@types/node-ipc": "^9.2.3",
     "@types/node-schedule": "^2.1.7",
     "@types/nunjucks": "^3.2.6",
     "@types/pg": "^8.11.14",
@@ -61,7 +66,6 @@
     "sass": "^1.87.0",
     "sass-loader": "^16.0.5",
     "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "^5.8.3",

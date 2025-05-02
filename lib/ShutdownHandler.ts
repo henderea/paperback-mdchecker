@@ -6,12 +6,16 @@ class ShutdownHandler {
   constructor() {
     process.on('SIGINT', async () => {
       for(const action of this.actions) {
-        await action('regular');
+        try {
+          await action('regular');
+        } catch { /* ignore */ }
       }
     });
     process.on('SIGUSR2', async () => {
       for(const action of this.actions) {
-        await action('nodemon');
+        try {
+          await action('nodemon');
+        } catch { /* ignore */ }
       }
     });
   }
