@@ -13,6 +13,8 @@ create table user_manga (
   last_update bigint,
   manga_title text,
   manga_status text,
+  last_volume text,
+  last_chapter text,
   last_title_check bigint not null default 0,
   last_deep_check bigint not null default 0,
   last_deep_check_find bigint not null default 0,
@@ -38,6 +40,8 @@ create or replace view user_manga_view as
          case when last_update = 0 then null else timezone('US/Eastern', to_timestamp(last_update / 1000.0)) end as last_update,
          manga_title,
          manga_status,
+         last_volume,
+         last_chapter,
          case when last_title_check = 0 then null else timezone('US/Eastern', to_timestamp(last_title_check / 1000.0)) end as last_title_check,
          case when last_deep_check = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check / 1000.0)) end as last_deep_check,
          case when last_deep_check_find = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check_find / 1000.0)) end as last_deep_check_find

@@ -159,6 +159,8 @@ export declare interface TitledMangaInfo {
 
 export declare interface MangaTitleCheckInfo extends MangaInfo {
   status: string | null;
+  lastVolume: string | null;
+  lastChapter: string | null;
 }
 
 export declare interface MangaUpdateInfo extends MangaInfo {
@@ -180,7 +182,7 @@ export async function updateMangaTitles(mangas: MangaTitleCheckInfo[], epoch: nu
   for(let i = 0; i < mangas.length; i++) {
     const manga: MangaTitleCheckInfo = mangas[i];
     if(manga.title) {
-      await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4 where manga_id = $1', [manga.id, manga.title, manga.status, epoch]);
+      await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4, last_volume = $5, last_chapter = $6 where manga_id = $1', [manga.id, manga.title, manga.status, epoch, manga.lastVolume, manga.lastChapter]);
     }
   }
 }

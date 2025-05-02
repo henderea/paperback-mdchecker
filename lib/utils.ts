@@ -72,3 +72,8 @@ export async function catchVoidError(p: Promise<void>, message: string): Promise
 export async function timeout(millis: number): Promise<void> {
   await new Promise<void>((resolve) => { setTimeout(() => resolve(), millis); });
 }
+
+export function nullIfEmpty(text: string | null): string | null {
+  if(!text || text.length == 0) { return null; }
+  return text;
+}

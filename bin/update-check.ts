@@ -12,7 +12,7 @@ import { URLBuilder } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration, catchVoidError, ensureInt, formatDuration, timeout } from 'lib/utils';
+import { Duration, catchVoidError, ensureInt, formatDuration, timeout, nullIfEmpty } from 'lib/utils';
 import { Pushover } from 'lib/Pushover';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
@@ -197,13 +197,15 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
       const titles = <string[]>([...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))].map((x: string) => decodeHTMLEntity(x)).filter((x) => x));
       const title = titles.find((t) => /[a-zA-Z]/.test(t)) ?? titles[0] ?? null;
       const status: string = mangaDetails.status;
+      const lastVolume: string | null = nullIfEmpty(mangaDetails.lastVolume);
+      const lastChapter: string | null = nullIfEmpty(mangaDetails.lastChapter);
       // const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => x.en ?? Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-      mangas.push({ id, title, status });
+      mangas.push({ id, title, status, lastVolume, lastChapter });
     }
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null, status: null }));
+    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null }));
   }
 }
 
