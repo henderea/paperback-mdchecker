@@ -4,7 +4,7 @@ import type { MangaTitleCheckInfo, UserPushUpdateResult } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
-import fs from 'node:fs';
+// import fs from 'node:fs';
 
 import schedule from 'node-schedule';
 import got from 'got';
@@ -430,11 +430,11 @@ ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
-const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
-if(fs.existsSync(ipcPath)) {
-  console.log('unlinking IPC');
-  fs.unlinkSync(ipcPath);
-}
+// const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
+// if(fs.existsSync(ipcPath)) {
+//   console.log('unlinking IPC');
+//   fs.unlinkSync(ipcPath);
+// }
 
 ipc.serve(() => {
   ipc.server.on('error', (e) => {
