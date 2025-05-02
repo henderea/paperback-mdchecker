@@ -31,10 +31,10 @@
     "pg": "^8.15.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/plugin-transform-runtime": "^7.26.10",
-    "@babel/plugin-transform-typescript": "^7.27.0",
-    "@babel/preset-env": "^7.26.9",
+    "@babel/core": "^7.27.1",
+    "@babel/plugin-transform-runtime": "^7.27.1",
+    "@babel/plugin-transform-typescript": "^7.27.1",
+    "@babel/preset-env": "^7.27.1",
     "@stylistic/eslint-plugin": "^4.2.0",
     "@types/express": "^5.0.1",
     "@types/html-minifier-terser": "^7.0.2",
