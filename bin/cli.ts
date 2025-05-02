@@ -3,7 +3,9 @@ import ipc from 'node-ipc';
 ipc.config.id = 'mdcUpdateChecker-client';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
-ipc.config.silent = true;
+// ipc.config.silent = true;
+ipc.config.logDepth = 1;
+ipc.config.unlink = false;
 
 const command: string = process.argv[2];
 
