@@ -428,6 +428,7 @@ ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
 ipc.serve(() => {
+  console.log('started up');
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
   }).on('trigger', async (command: string, socket: Socket) => {

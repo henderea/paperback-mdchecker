@@ -3,8 +3,8 @@ import ipc from 'node-ipc';
 ipc.config.id = 'mdcUpdateChecker-client';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
-// ipc.config.silent = true;
-ipc.config.logDepth = 1;
+ipc.config.silent = true;
+// ipc.config.logDepth = 1;
 ipc.config.unlink = false;
 
 const command: string = process.argv[2];
@@ -36,7 +36,9 @@ function doExit(message: string | null = null): void {
 }
 
 ipc.connectTo('mdcUpdateChecker', () => {
-  ipc.of.mdcUpdateChecker.on('connect', () => {
+  ipc.of.mdcUpdateChecker.on('error', (e) => {
+    console.error('Encountered error', e);
+  }).on('connect', () => {
     console.log(`${CLEAR_LINE}Starting ${commandName}`);
     ipc.of.mdcUpdateChecker.emit('trigger', command);
   })
