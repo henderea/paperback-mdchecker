@@ -468,6 +468,6 @@ shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
-  .thenDo(() => { try { ipc.server.stop(); console.log('ipc stopped'); } catch (e) { console.error(e); } })
+  .thenDo(ipc.server.stop)
   .thenLogIf('Shutdown complete', !noStartStopLogs)
   .thenExit(0);
