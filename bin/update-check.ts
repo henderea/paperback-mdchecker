@@ -465,9 +465,9 @@ ipc.serve(() => {
 ipc.server.start();
 
 shutdownHandler()
-  .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
+  .logIf('SIGINT signal received; shutting down', true)
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
   .thenDo(async () => { ipc.server.stop(); })
-  .thenLogIf('Shutdown complete', !noStartStopLogs)
+  .thenLogIf('Shutdown complete', true)
   .thenExit(0);
