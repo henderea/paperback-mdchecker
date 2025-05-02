@@ -432,6 +432,7 @@ ipc.config.readableAll = true;
 
 const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
 if(fs.existsSync(ipcPath)) {
+  console.log('unlinking IPC');
   fs.unlinkSync(ipcPath);
 }
 
