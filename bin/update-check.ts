@@ -4,7 +4,7 @@ import type { MangaTitleCheckInfo, UserPushUpdateResult } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
-// import fs from 'node:fs';
+import fs from 'node:fs';
 
 import schedule from 'node-schedule';
 import got from 'got';
@@ -425,16 +425,10 @@ ipc.config.retry = 1500;
 ipc.config.sync = false;
 // ipc.config.silent = true;
 // ipc.config.logDepth = 1;
-ipc.config.unlink = false;
+// ipc.config.unlink = false;
 ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
-
-// const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
-// if(fs.existsSync(ipcPath)) {
-//   console.log('unlinking IPC');
-//   fs.unlinkSync(ipcPath);
-// }
 
 ipc.serve(() => {
   console.log(`IPC started up (${process.pid})`);
@@ -472,7 +466,26 @@ ipc.serve(() => {
   });
 });
 
-ipc.server.start();
+const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
+
+const MAX_TURNS = 10;
+
+(async () => {
+  let turns: number = 0;
+  while(turns < MAX_TURNS) {
+    turns++;
+    if(fs.existsSync(ipcPath)) {
+      await timeout(1000);
+    } else {
+      break;
+    }
+  }
+  if(fs.existsSync(ipcPath)) {
+    console.log('Done waiting; unlinking IPC');
+    fs.unlinkSync(ipcPath);
+  }
+  ipc.server.start();
+})();
 
 shutdownHandler()
   .logIf(`SIGINT signal received (${process.pid}); shutting down`, true)
