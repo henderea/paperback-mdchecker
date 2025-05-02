@@ -427,7 +427,7 @@ ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
-ipc.serve('/tmp/app.mdcUpdateChecker', () => {
+ipc.serve(() => {
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
   }).on('trigger', async (command: string, socket: Socket) => {
@@ -467,7 +467,7 @@ ipc.server.start();
 shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
   .thenDo(schedule.gracefulShutdown)
-  .thenDo(() => ipc.server.stop())
   .thenDo(shutdownClient)
+  .thenDo(() => { try { ipc.server.stop(); console.log('ipc stopped'); } catch (e) { console.error(e); } })
   .thenLogIf('Shutdown complete', !noStartStopLogs)
   .thenExit(0);
