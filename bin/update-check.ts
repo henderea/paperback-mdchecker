@@ -418,7 +418,7 @@ schedule.scheduleJob(updateSchedule, () => { queryUpdates(); });
 schedule.scheduleJob(titleUpdateSchedule, () => { queryTitles(); });
 schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
 
-ipc.config.id = 'mdchecker-update-check-daemon';
+ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
 ipc.config.logInColor = false;

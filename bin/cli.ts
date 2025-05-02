@@ -1,6 +1,6 @@
 import ipc from 'node-ipc';
 
-ipc.config.id = 'mdchecker-update-check-client';
+ipc.config.id = 'mdcUpdateChecker-client';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
 
@@ -21,20 +21,20 @@ const commandName: string = nameMap[command];
 const CLEAR_LINE: string = '\r\u001b[K';
 
 function doErrorExit(message: string): void {
-  ipc.disconnect('updateChecker');
+  ipc.disconnect('mdcUpdateChecker');
   console.error(`${CLEAR_LINE}${message}`);
   process.exit(1);
 }
 
 function doExit(message: string | null = null): void {
-  ipc.disconnect('updateChecker');
+  ipc.disconnect('mdcUpdateChecker');
   if(message) { console.log(`${CLEAR_LINE}${message}`); }
   process.exit(0);
 }
 
-ipc.connectTo('updateChecker', () => {
-  ipc.of.updateChecker.on('connect', () => {
-    ipc.of.updateChecker.emit('trigger', command);
+ipc.connectTo('mdcUpdateCheck', () => {
+  ipc.of.mdcUpdateChecker.on('connect', () => {
+    ipc.of.mdcUpdateChecker.emit('trigger', command);
   })
     .on('unsupported', () => {
       doErrorExit(`Command "${command}" is unsupported`);
