@@ -421,14 +421,13 @@ schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
 ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
-ipc.config.silent = true;
+// ipc.config.silent = true;
 // ipc.config.logDepth = 1;
 ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
 ipc.serve(() => {
-  console.log('started up');
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
   }).on('trigger', async (command: string, socket: Socket) => {
@@ -468,7 +467,7 @@ ipc.server.start();
 shutdownHandler()
   .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
   .thenDo(schedule.gracefulShutdown)
-  .thenDo(ipc.server.stop)
+  .thenDo(() => ipc.server.stop())
   .thenDo(shutdownClient)
   .thenLogIf('Shutdown complete', !noStartStopLogs)
   .thenExit(0);
