@@ -35,6 +35,7 @@ function doExit(message: string | null = null): void {
 
 ipc.connectTo('mdcUpdateChecker', () => {
   ipc.of.mdcUpdateChecker.on('connect', () => {
+    console.log(`${CLEAR_LINE}Starting ${commandName}`);
     ipc.of.mdcUpdateChecker.emit('trigger', command);
   })
     .on('unsupported', () => {
