@@ -4,6 +4,8 @@ import type { MangaTitleCheckInfo, UserPushUpdateResult } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
+import fs from 'node:fs';
+
 import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
@@ -421,11 +423,17 @@ schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
 ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
 ipc.config.sync = false;
-// ipc.config.silent = true;
+ipc.config.silent = true;
 // ipc.config.logDepth = 1;
+ipc.config.unlink = false;
 ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
+
+const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
+if(fs.existsSync(ipcPath)) {
+  fs.unlinkSync(ipcPath);
+}
 
 ipc.serve(() => {
   ipc.server.on('error', (e) => {
