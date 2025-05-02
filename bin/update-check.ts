@@ -437,6 +437,7 @@ ipc.config.readableAll = true;
 // }
 
 ipc.serve(() => {
+  console.log(`IPC started up (${process.pid})`);
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
   }).on('trigger', async (command: string, socket: Socket) => {
@@ -474,9 +475,9 @@ ipc.serve(() => {
 ipc.server.start();
 
 shutdownHandler()
-  .logIf('SIGINT signal received; shutting down', !noStartStopLogs)
+  .logIf(`SIGINT signal received (${process.pid}); shutting down`, true)
   .thenDo(ipc.server.stop)
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
-  .thenLogIf('Shutdown complete', !noStartStopLogs)
+  .thenLogIf(`Shutdown complete (${process.pid})`, true)
   .thenExit(0);
