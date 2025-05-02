@@ -401,7 +401,7 @@ async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => v
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       await updateCompletedDeepCheck(epoch, Date.now(), 0, checkedManga.length);
       queryingUpdatesDeep = false;
-      return 0;
+      return checkedManga.length;
     }
     await updateMangaRecordsForQuery(updatedManga, epoch);
     await updateCompletedDeepCheck(epoch, Date.now(), updatedManga.length, checkedManga.length);
