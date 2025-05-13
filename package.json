@@ -29,7 +29,7 @@
     "node-ipc": "^12.0.0",
     "node-schedule": "^2.1.1",
     "nunjucks": "^3.2.4",
-    "pg": "^8.15.6",
+    "pg": "^8.16.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
@@ -61,7 +61,7 @@
     "nodemon": "^3.1.10",
     "postcss-loader": "^8.1.1",
     "postcss-preset-env": "^10.1.6",
-    "sass": "^1.87.0",
+    "sass": "^1.88.0",
     "sass-loader": "^16.0.5",
     "ts-loader": "^9.5.2",
     "tsconfig-paths": "^4.2.0",
