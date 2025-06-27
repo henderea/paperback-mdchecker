@@ -33,7 +33,7 @@
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.27.4",
+    "@babel/core": "^7.27.7",
     "@babel/plugin-transform-runtime": "^7.27.4",
     "@babel/plugin-transform-typescript": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
@@ -52,7 +52,7 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "css-loader": "^7.1.2",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.0",
     "eslint": "^9.29.0",
     "eslint-config-henderea": "^2.0.58",
     "eslint-plugin-import": "^2.32.0",
@@ -60,7 +60,7 @@
     "mini-css-extract-plugin": "^2.9.2",
     "nodemon": "^3.1.10",
     "postcss-loader": "^8.1.1",
-    "postcss-preset-env": "^10.2.3",
+    "postcss-preset-env": "^10.2.4",
     "sass": "^1.89.2",
     "sass-loader": "^16.0.5",
     "ts-loader": "^9.5.2",
