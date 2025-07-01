@@ -29,7 +29,7 @@
     "node-ipc": "^12.0.0",
     "node-schedule": "^2.1.1",
     "nunjucks": "^3.2.4",
-    "pg": "^8.16.2",
+    "pg": "^8.16.3",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
@@ -40,7 +40,7 @@
     "@stylistic/eslint-plugin": "^5.1.0",
     "@types/express": "^5.0.3",
     "@types/html-minifier-terser": "^7.0.2",
-    "@types/node": "^24.0.4",
+    "@types/node": "^24.0.10",
     "@types/node-ipc": "^9.2.3",
     "@types/node-schedule": "^2.1.7",
     "@types/nunjucks": "^3.2.6",
@@ -52,7 +52,7 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "css-loader": "^7.1.2",
-    "dotenv": "^16.6.0",
+    "dotenv": "^17.0.1",
     "eslint": "^9.30.1",
     "eslint-config-henderea": "^2.0.59",
     "eslint-plugin-import": "^2.32.0",
