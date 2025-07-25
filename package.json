@@ -52,7 +52,7 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "css-loader": "^7.1.2",
-    "dotenv": "^17.2.0",
+    "dotenv": "^17.2.1",
     "eslint": "^9.32.0",
     "eslint-config-henderea": "^2.0.65",
     "eslint-plugin-import": "^2.32.0",
