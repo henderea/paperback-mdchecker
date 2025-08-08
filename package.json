@@ -61,7 +61,7 @@
     "nodemon": "^3.1.10",
     "postcss-loader": "^8.1.1",
     "postcss-preset-env": "^10.2.4",
-    "sass": "^1.89.2",
+    "sass": "^1.90.0",
     "sass-loader": "^16.0.5",
     "ts-loader": "^9.5.2",
     "tsconfig-paths": "^4.2.0",
