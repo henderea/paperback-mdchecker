@@ -52,8 +52,8 @@ importers:
         specifier: ^7.28.0
         version: 7.28.0(@babel/core@7.28.0)
       '@stylistic/eslint-plugin':
-        specifier: ^5.2.2
-        version: 5.2.2(eslint@9.32.0(jiti@1.21.7))
+        specifier: ^5.2.3
+        version: 5.2.3(eslint@9.32.0(jiti@1.21.7))
       '@types/express':
         specifier: ^5.0.3
         version: 5.0.3
@@ -103,8 +103,8 @@ importers:
         specifier: ^9.32.0
         version: 9.32.0(jiti@1.21.7)
       eslint-config-henderea:
-        specifier: ^2.0.66
-        version: 2.0.66(@stylistic/eslint-plugin@5.2.2(eslint@9.32.0(jiti@1.21.7)))(@typescript-eslint/eslint-plugin@8.39.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7)))(eslint@9.32.0(jiti@1.21.7))(globals@16.3.0)(typescript-eslint@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(typescript@5.9.2)
+        specifier: ^2.0.68
+        version: 2.0.68(@stylistic/eslint-plugin@5.2.3(eslint@9.32.0(jiti@1.21.7)))(@typescript-eslint/eslint-plugin@8.39.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7)))(eslint@9.32.0(jiti@1.21.7))(globals@16.3.0)(typescript-eslint@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(typescript@5.9.2)
       eslint-plugin-import:
         specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))
@@ -1113,8 +1113,8 @@ packages:
     resolution: {integrity: sha512-d9xRovfKNz1SKieM0qJdO+PQonjnnIfSNWfHYnBSJ9hkjm0ZPw6HlxscDXYstp3z+7V2GOFHc+J0CYrYTjqCJw==}
     engines: {node: '>=18'}
 
-  '@stylistic/eslint-plugin@5.2.2':
-    resolution: {integrity: sha512-bE2DUjruqXlHYP3Q2Gpqiuj2bHq7/88FnuaS0FjeGGLCy+X6a07bGVuwtiOYnPSLHR6jmx5Bwdv+j7l8H+G97A==}
+  '@stylistic/eslint-plugin@5.2.3':
+    resolution: {integrity: sha512-oY7GVkJGVMI5benlBDCaRrSC1qPasafyv5dOBLLv5MTilMGnErKhO6ziEfodDDIZbo5QxPUNW360VudJOFODMw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: '>=9.0.0'
@@ -1849,10 +1849,10 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-henderea@2.0.66:
-    resolution: {integrity: sha512-LsFLmmE3elLSh7XcdPScx8Ra22oMxwmIU9GlCmdGRMTPQqhObntFEQC8AIGeceB6jnahesS8SbQbD2z3qDrRvQ==}
+  eslint-config-henderea@2.0.68:
+    resolution: {integrity: sha512-2JjvigvT8ASLj2j+hNjnsn7fhduF8Rs42f+UB8Ntkg3TDMJGPEuLmcDYuGC8tonB0U5aEfXuAjpJKcnI3lmCQg==}
     peerDependencies:
-      '@stylistic/eslint-plugin': ^5.2.2
+      '@stylistic/eslint-plugin': ^5.2.3
       '@typescript-eslint/eslint-plugin': ^8.39.0
       '@typescript-eslint/parser': ^8.39.0
       eslint: ^9.32.0
@@ -4757,7 +4757,7 @@ snapshots:
 
   '@sindresorhus/is@7.0.2': {}
 
-  '@stylistic/eslint-plugin@5.2.2(eslint@9.32.0(jiti@1.21.7))':
+  '@stylistic/eslint-plugin@5.2.3(eslint@9.32.0(jiti@1.21.7))':
     dependencies:
       '@eslint-community/eslint-utils': 4.7.0(eslint@9.32.0(jiti@1.21.7))
       '@typescript-eslint/types': 8.39.0
@@ -5637,9 +5637,9 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-henderea@2.0.66(@stylistic/eslint-plugin@5.2.2(eslint@9.32.0(jiti@1.21.7)))(@typescript-eslint/eslint-plugin@8.39.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7)))(eslint@9.32.0(jiti@1.21.7))(globals@16.3.0)(typescript-eslint@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(typescript@5.9.2):
+  eslint-config-henderea@2.0.68(@stylistic/eslint-plugin@5.2.3(eslint@9.32.0(jiti@1.21.7)))(@typescript-eslint/eslint-plugin@8.39.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7)))(eslint@9.32.0(jiti@1.21.7))(globals@16.3.0)(typescript-eslint@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(typescript@5.9.2):
     dependencies:
-      '@stylistic/eslint-plugin': 5.2.2(eslint@9.32.0(jiti@1.21.7))
+      '@stylistic/eslint-plugin': 5.2.3(eslint@9.32.0(jiti@1.21.7))
       '@typescript-eslint/eslint-plugin': 8.39.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2))(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2)
       '@typescript-eslint/parser': 8.39.0(eslint@9.32.0(jiti@1.21.7))(typescript@5.9.2)
       eslint: 9.32.0(jiti@1.21.7)
