@@ -1,7 +1,7 @@
 export type RunType = 'regular' | 'nodemon';
 
 class ShutdownHandler {
-  private readonly _actions: Array<(runType: RunType) => Promise<void>> = [];
+  readonly actions: Array<(runType: RunType) => Promise<void>> = [];
 
   constructor() {
     process.on('SIGINT', async () => {
@@ -19,8 +19,6 @@ class ShutdownHandler {
       }
     });
   }
-
-  get actions(): Array<(runType: RunType) => Promise<void>> { return this._actions; }
 
   do(action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
     if(typeof action === 'function') {

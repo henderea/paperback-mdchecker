@@ -9,10 +9,26 @@ export declare type ApiResult = boolean | 'api-unavailable';
 
 export declare type MessagePriority = -2 | -1 | 0 | 1 | 2;
 
+async function handleApiRequest(url: string, form: Dictionary<any>): Promise<ApiResult> {
+  const response: Response<StandardResponse> = await got.post(url, {
+    form,
+    responseType: 'json'
+  });
+  const statusCode: number = response.statusCode;
+  if(statusCode == 200) {
+    const result: StandardResponse = response.body;
+    return result?.status == 1;
+  }
+  if(statusCode >= 400 && statusCode < 500) {
+    throw new Error(`There is an issue with the request. Status code ${statusCode}; body: ${response.body}`);
+  }
+  return 'api-unavailable';
+}
+
 class Message {
-  private readonly _apiToken: string;
-  private readonly _userToken: string;
-  private readonly _message: string;
+  private readonly apiToken: string;
+  private readonly userToken: string;
+  readonly message: string;
   private _messagePriority: MessagePriority | undefined;
   private _messageHtml: boolean = false;
   private _messageMonospace: boolean = false;
@@ -23,14 +39,11 @@ class Message {
   private _messageUrlTitle: string | undefined;
 
   constructor(apiToken: string, userToken: string, message: string) {
-    this._apiToken = apiToken;
-    this._userToken = userToken;
-    this._message = message;
+    this.apiToken = apiToken;
+    this.userToken = userToken;
+    this.message = message;
   }
 
-  private get apiToken(): string { return this._apiToken; }
-  private get userToken(): string { return this._userToken; }
-  get message(): string { return this._message; }
   get messagePriority(): MessagePriority | undefined { return this._messagePriority; }
   get messageHtml(): boolean { return this._messageHtml; }
   get messageMonospace(): boolean { return this._messageMonospace; }
@@ -87,64 +100,36 @@ class Message {
   async send(options: Dictionary<any> = {}): Promise<ApiResult> {
     const form: Dictionary<any> = { ...options };
     form.token = this.apiToken;
-    form. user = this.userToken;
+    form.user = this.userToken;
     form.message = this.message;
-    if(this.messagePriority || this.messagePriority === 0) { form.priority = this.messagePriority; }
+    if(this.messagePriority !== undefined) { form.priority = this.messagePriority; }
     if(this.messageHtml) { form.html = 1; }
     if(this.messageMonospace) { form.monospace = 1; }
     if(this.messageTimestamp) { form.timestamp = this.messageTimestamp; }
     if(this.messageTitle) { form.title = this.messageTitle; }
     if(this.messageTtl) { form.ttl = this.messageTtl; }
-    if(this.messageUrl) { form.url = this.messageUrl; }
-    if(this.messageUrl && this.messageUrlTitle) { form.url_title = this.messageUrlTitle; }
+    if(this.messageUrl) {
+      form.url = this.messageUrl;
+      if(this.messageUrlTitle) { form.url_title = this.messageUrlTitle; }
+    }
 
-    const response: Response<StandardResponse> = await got.post('https://api.pushover.net/1/messages.json', {
-      form,
-      responseType: 'json'
-    });
-    const statusCode: number = response.statusCode;
-    if(statusCode == 200) {
-      const result: StandardResponse = response.body;
-      return result?.status == 1;
-    }
-    if(statusCode >= 400 && statusCode < 500) {
-      throw new Error(`There is an issue with the request. Status code ${statusCode}; body: ${response.body}`);
-    }
-    return 'api-unavailable';
+    return await handleApiRequest('https://api.pushover.net/1/messages.json', form);
   }
 }
 
 export class Pushover {
-  private readonly _apiToken: string;
-  private readonly _userToken: string;
+  readonly apiToken: string;
+  readonly userToken: string;
 
   constructor(apiToken: string, userToken: string) {
-    this._apiToken = apiToken;
-    this._userToken = userToken;
+    this.apiToken = apiToken;
+    this.userToken = userToken;
   }
-
-  get apiToken(): string { return this._apiToken; }
-  get userToken(): string { return this._userToken; }
 
   async checkUser(): Promise<ApiResult> {
     const token: string = this.apiToken;
     const user: string = this.userToken;
-    const response: Response<StandardResponse> = await got.post('https://api.pushover.net/1/users/validate.json', {
-      form: {
-        token,
-        user
-      },
-      responseType: 'json'
-    });
-    const statusCode: number = response.statusCode;
-    if(statusCode == 200) {
-      const result: StandardResponse = response.body;
-      return result?.status == 1;
-    }
-    if(statusCode >= 400 && statusCode < 500) {
-      throw new Error(`There is an issue with the request. Status code ${statusCode}; body: ${response.body}`);
-    }
-    return 'api-unavailable';
+    return await handleApiRequest('https://api.pushover.net/1/users/validate.json', { token, user });
   }
 
   message(message: string): Message {
