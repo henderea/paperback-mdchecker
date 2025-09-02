@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "got": "^14.4.7",
+    "got": "^14.4.8",
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
     "http-terminator": "^3.2.0",
@@ -59,7 +59,7 @@
     "globals": "^16.3.0",
     "mini-css-extract-plugin": "^2.9.4",
     "nodemon": "^3.1.10",
-    "postcss-loader": "^8.1.1",
+    "postcss-loader": "^8.2.0",
     "postcss-preset-env": "^10.3.1",
     "sass": "^1.91.0",
     "sass-loader": "^16.0.5",
