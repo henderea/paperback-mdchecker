@@ -33,7 +33,7 @@
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.3",
+    "@babel/core": "^7.28.4",
     "@babel/plugin-transform-runtime": "^7.28.3",
     "@babel/plugin-transform-typescript": "^7.28.0",
     "@babel/preset-env": "^7.28.3",
@@ -48,7 +48,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "@vercel/ncc": "^0.38.3",
-    "ansi-escapes": "^7.0.0",
+    "ansi-escapes": "^7.1.0",
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.1",
     "css-loader": "^7.1.2",
@@ -61,7 +61,7 @@
     "nodemon": "^3.1.10",
     "postcss-loader": "^8.2.0",
     "postcss-preset-env": "^10.3.1",
-    "sass": "^1.92.0",
+    "sass": "^1.92.1",
     "sass-loader": "^16.0.5",
     "ts-loader": "^9.5.4",
     "tsconfig-paths": "^4.2.0",
