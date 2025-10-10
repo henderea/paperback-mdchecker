@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "got": "^14.4.9",
+    "got": "^14.5.0",
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
     "http-terminator": "^3.2.0",
@@ -40,7 +40,7 @@
     "@stylistic/eslint-plugin": "^5.4.0",
     "@types/express": "^5.0.3",
     "@types/html-minifier-terser": "^7.0.2",
-    "@types/node": "^24.7.0",
+    "@types/node": "^24.7.1",
     "@types/node-ipc": "^9.2.3",
     "@types/node-schedule": "^2.1.8",
     "@types/nunjucks": "^3.2.6",
@@ -68,7 +68,7 @@
     "tsconfig-paths-webpack-plugin": "^4.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.0",
-    "webpack": "^5.102.0",
+    "webpack": "^5.102.1",
     "webpack-cli": "^6.0.1"
   },
   "nodemonConfig": {
