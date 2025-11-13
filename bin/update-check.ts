@@ -288,6 +288,10 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
     const checkedManga: [string, number][] = [];
     if(!mangas || mangas.length == 0) { return { updatedManga, checkedManga }; }
 
+    const latestUpdate: number = await getLatestUpdate();
+
+    const regularCheckThreshold: number = latestUpdate <= 0 ? 0 : (latestUpdate - Duration.SECONDS(55));
+
     let counter: number = 0;
 
     for(const [mangaId, lastUpdate, lastDeepCheck, lastDeepCheckFind] of mangas) {
@@ -347,7 +351,7 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
       checkedManga.push([mangaId, pages > 0 ? publishAt : lastDeepCheckFind]);
       const minPublish: number = lastUpdate <= lastDeepCheck ? lastDeepCheckFind : lastUpdate;
 
-      if(pages > 0 && publishAt > minPublish && !updatedManga.includes(mangaId)) {
+      if(pages > 0 && publishAt > minPublish && (regularCheckThreshold <= 0 || publishAt <= regularCheckThreshold) && !updatedManga.includes(mangaId)) {
         updatedManga.push(mangaId);
       }
     }
