@@ -21,7 +21,7 @@
     "build": "pnpm build:wp && pnpm build:app && pnpm build:update-check"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "got": "^14.6.5",
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
@@ -38,7 +38,7 @@
     "@babel/plugin-transform-typescript": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
     "@stylistic/eslint-plugin": "^5.6.1",
-    "@types/express": "^5.0.5",
+    "@types/express": "^5.0.6",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^24.10.1",
     "@types/node-ipc": "^9.2.3",
@@ -60,7 +60,7 @@
     "mini-css-extract-plugin": "^2.9.4",
     "nodemon": "^3.1.11",
     "postcss-loader": "^8.2.0",
-    "postcss-preset-env": "^10.4.0",
+    "postcss-preset-env": "^10.5.0",
     "sass": "^1.94.2",
     "sass-loader": "^16.0.6",
     "ts-loader": "^9.5.4",
