@@ -57,7 +57,7 @@
     "eslint-config-henderea": "^2.0.99",
     "eslint-plugin-import": "^2.32.0",
     "globals": "^17.0.0",
-    "mini-css-extract-plugin": "^2.9.4",
+    "mini-css-extract-plugin": "^2.10.0",
     "nodemon": "^3.1.11",
     "postcss-loader": "^8.2.0",
     "postcss-preset-env": "^11.1.1",
