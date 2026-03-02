@@ -1,7 +1,8 @@
 export type RunType = 'regular' | 'nodemon';
 
 class ShutdownHandler {
-  readonly actions: Array<(runType: RunType) => Promise<void>> = [];
+  private readonly _actions: Array<(runType: RunType) => Promise<void>> = [];
+  private _defaultExitCode: number = 0;
 
   private async trigger(runType: RunType): Promise<void> {
     for(const action of this.actions) {
@@ -9,6 +10,7 @@ class ShutdownHandler {
         await action(runType);
       } catch (e: any) {
         console.error(e);
+        this._defaultExitCode = 1;
       }
     }
   }
@@ -17,6 +19,9 @@ class ShutdownHandler {
     process.on('SIGINT', () => void this.trigger('regular'));
     process.on('SIGUSR2', () => void this.trigger('nodemon'));
   }
+
+  get actions(): Array<(runType: RunType) => Promise<void>> { return this._actions; }
+  get defaultExitCode(): number { return this._defaultExitCode; }
 
   do(action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
     if(typeof action === 'function') {
@@ -36,10 +41,15 @@ class ShutdownHandler {
 
   logIf(logText: string, condition: boolean) { return condition ? this.log(logText) : this; }
 
-  exit(exitCode: number = 0) {
-    return this
-      .runTypeDo('regular', process.exit, exitCode)
-      .runTypeDo('nodemon', () => { process.kill(process.pid, 'SIGUSR2'); });
+  exit(exitCode?: number) {
+    this.actions.push(async (rt: RunType) => {
+      if(rt == 'regular') {
+        process.exit(exitCode ?? this.defaultExitCode);
+      } else {
+        process.kill(process.pid, 'SIGUSR2');
+      }
+    });
+    return this;
   }
 
   thenDo(action: (...args: any[]) => void | Promise<void>, ...params: any[]) { return this.do(action, ...params); }
@@ -48,7 +58,7 @@ class ShutdownHandler {
 
   thenLogIf(logText: string, condition: boolean) { return this.logIf(logText, condition); }
 
-  thenExit(exitCode: number = 0) { return this.exit(exitCode); }
+  thenExit(exitCode?: number) { return this.exit(exitCode); }
 }
 
 export function shutdownHandler(): ShutdownHandler { return new ShutdownHandler(); }
