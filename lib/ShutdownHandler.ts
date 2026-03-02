@@ -7,7 +7,9 @@ class ShutdownHandler {
     for(const action of this.actions) {
       try {
         await action(runType);
-      } catch { /* ignore */ }
+      } catch (e: any) {
+        console.error(e);
+      }
     }
   }
 
