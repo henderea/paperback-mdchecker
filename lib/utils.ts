@@ -48,7 +48,7 @@ export function formatDurationShort(d: number, maxForSeconds: number = Duration.
   return parts.join(' ');
 }
 
-export function ensureInt(v: number | string | any): number {
+export function ensureInt(v: any): number {
   return parseInt(String(v));
 }
 

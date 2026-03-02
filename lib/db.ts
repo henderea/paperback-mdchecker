@@ -172,15 +172,13 @@ export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: numb
 }
 
 export async function updateMangaRecordsForDeepQuery(checkedManga: [string, number][], epoch: number): Promise<void> {
-  for(let i = 0; i < checkedManga.length; i++) {
-    const [mangaId, deepCheckFind]: [string, number] = checkedManga[i];
+  for(const [mangaId, deepCheckFind] of checkedManga) {
     await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3 where manga_id = $1', [mangaId, epoch, deepCheckFind]);
   }
 }
 
 export async function updateMangaTitles(mangas: MangaTitleCheckInfo[], epoch: number): Promise<void> {
-  for(let i = 0; i < mangas.length; i++) {
-    const manga: MangaTitleCheckInfo = mangas[i];
+  for(const manga of mangas) {
     if(manga.title) {
       await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4, last_volume = $5, last_chapter = $6 where manga_id = $1', [manga.id, manga.title, manga.status, epoch, manga.lastVolume, manga.lastChapter]);
     }

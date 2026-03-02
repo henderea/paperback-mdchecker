@@ -20,7 +20,7 @@ async function handleApiRequest(url: string, form: Dictionary<any>): Promise<Api
     return result?.status == 1;
   }
   if(statusCode >= 400 && statusCode < 500) {
-    throw new Error(`There is an issue with the request. Status code ${statusCode}; body: ${response.body}`);
+    throw new Error(`There is an issue with the request. Status code ${statusCode}; body: ${JSON.stringify(response.body)}`);
   }
   return 'api-unavailable';
 }

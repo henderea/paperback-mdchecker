@@ -38,7 +38,8 @@ const app: Application = express();
 const router: Router = express.Router();
 
 function isEmpty(value: string | any[] | null | undefined): boolean {
-  return value === null || value === undefined || !value.length || value.length == 0;
+  const length: number | undefined = value?.length;
+  return length === undefined || length === 0;
 }
 
 nunjucks.configure('views', {
@@ -59,9 +60,9 @@ router.use(express.static('public', { index: false }));
 
 const users: UserList = new UserList();
 
-schedule.scheduleJob(userUpdateSchedule, () => users.update());
+schedule.scheduleJob(userUpdateSchedule, () => void users.update());
 
-users.update();
+void users.update();
 
 router.use((req: Request, res: Response, next: NextFunction) => {
   res.renderMinified = function(view: string, options?: object): Promise<void> {
@@ -71,7 +72,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
         minify(html, { collapseWhitespace: true, preserveLineBreaks: true }).then((minified) => {
           res.send(minified);
           resolve();
-        });
+        }).catch(reject);
       });
     });
   };

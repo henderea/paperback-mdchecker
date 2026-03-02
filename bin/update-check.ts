@@ -217,7 +217,7 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
     for(const manga of json.data) {
       const id = manga.id;
       const mangaDetails = manga.attributes;
-      const titles = <string[]>([...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))].map((x: string) => decodeHTMLEntity(x)).filter((x) => x));
+      const titles = [...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))].map((x: string) => decodeHTMLEntity(x)).filter((x) => x);
       const title = titles.find((t) => /[a-zA-Z]/.test(t)) ?? titles[0] ?? null;
       const status: string = mangaDetails.status;
       const lastVolume: string | null = nullIfEmpty(mangaDetails.lastVolume);
@@ -299,7 +299,7 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
         await updateInProgressDeepCheck(epoch, checkedManga.length);
         statusHandler(counter, mangas.length);
       }
-      updateInProgressDeepCheck(epoch, checkedManga.length);
+      void updateInProgressDeepCheck(epoch, checkedManga.length);
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
@@ -420,9 +420,9 @@ async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => v
   }
 }
 
-schedule.scheduleJob(updateSchedule, () => { queryUpdates(); });
-schedule.scheduleJob(titleUpdateSchedule, () => { queryTitles(); });
-schedule.scheduleJob(deepCheckSchedule, () => { queryUpdatesDeep(); });
+schedule.scheduleJob(updateSchedule, () => void queryUpdates());
+schedule.scheduleJob(titleUpdateSchedule, () => void queryTitles());
+schedule.scheduleJob(deepCheckSchedule, () => void queryUpdatesDeep());
 
 ipc.config.id = 'mdcUpdateChecker';
 ipc.config.retry = 1500;
@@ -434,40 +434,42 @@ ipc.config.logInColor = false;
 ipc.config.writableAll = true;
 ipc.config.readableAll = true;
 
+async function handleTrigger(command: string, socket: Socket): Promise<void> {
+  if(command === 'title-check') {
+    const rv: number | false = await queryTitles();
+    if(rv === false) {
+      ipc.server.emit(socket, 'already-running');
+    } else if(rv === -1) {
+      ipc.server.emit(socket, 'no-items');
+    } else if(rv < 0) {
+      ipc.server.emit(socket, 'failure', String(rv));
+    } else {
+      ipc.server.emit(socket, 'success', String(rv));
+    }
+  } else if(command === 'deep-check') {
+    const rv: number | false = await queryUpdatesDeep((cur: number, total: number) => {
+      const len: number = String(total).length;
+      ipc.server.emit(socket, 'progress', `${String(cur).padStart(len)}/${total} (${Math.round((cur * 1000.0) / total) / 10.0}%)`);
+    });
+    if(rv === false) {
+      ipc.server.emit(socket, 'already-running');
+    } else if(rv === -1) {
+      ipc.server.emit(socket, 'no-items');
+    } else if(rv < 0) {
+      ipc.server.emit(socket, 'failure', String(rv));
+    } else {
+      ipc.server.emit(socket, 'success', String(rv));
+    }
+  } else {
+    ipc.server.emit(socket, 'unsupported');
+  }
+}
+
 ipc.serve(() => {
   // console.log(`IPC started up (${process.pid})`);
   ipc.server.on('error', (e) => {
     console.error('Encountered error setting up IPC', e);
-  }).on('trigger', async (command: string, socket: Socket) => {
-    if(command === 'title-check') {
-      const rv: number | false = await queryTitles();
-      if(rv === false) {
-        ipc.server.emit(socket, 'already-running');
-      } else if(rv === -1) {
-        ipc.server.emit(socket, 'no-items');
-      } else if(rv < 0) {
-        ipc.server.emit(socket, 'failure', String(rv));
-      } else {
-        ipc.server.emit(socket, 'success', String(rv));
-      }
-    } else if(command === 'deep-check') {
-      const rv: number | false = await queryUpdatesDeep((cur: number, total: number) => {
-        const len: number = String(total).length;
-        ipc.server.emit(socket, 'progress', `${String(cur).padStart(len)}/${total} (${Math.round((cur * 1000.0) / total) / 10.0}%)`);
-      });
-      if(rv === false) {
-        ipc.server.emit(socket, 'already-running');
-      } else if(rv === -1) {
-        ipc.server.emit(socket, 'no-items');
-      } else if(rv < 0) {
-        ipc.server.emit(socket, 'failure', String(rv));
-      } else {
-        ipc.server.emit(socket, 'success', String(rv));
-      }
-    } else {
-      ipc.server.emit(socket, 'unsupported');
-    }
-  });
+  }).on('trigger', (command: string, socket: Socket) => void handleTrigger(command, socket));
 });
 
 const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
@@ -489,7 +491,10 @@ const MAX_TURNS = 30;
     fs.unlinkSync(ipcPath);
   }
   ipc.server.start();
-})();
+})().catch((e: any) => {
+  console.log(e);
+  process.exit(1);
+});
 
 shutdownHandler()
   .logIf(`SIGINT signal received (${process.pid}); shutting down`, !noStartStopLogs)

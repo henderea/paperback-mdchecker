@@ -3,21 +3,17 @@ export type RunType = 'regular' | 'nodemon';
 class ShutdownHandler {
   readonly actions: Array<(runType: RunType) => Promise<void>> = [];
 
+  private async trigger(runType: RunType): Promise<void> {
+    for(const action of this.actions) {
+      try {
+        await action(runType);
+      } catch { /* ignore */ }
+    }
+  }
+
   constructor() {
-    process.on('SIGINT', async () => {
-      for(const action of this.actions) {
-        try {
-          await action('regular');
-        } catch { /* ignore */ }
-      }
-    });
-    process.on('SIGUSR2', async () => {
-      for(const action of this.actions) {
-        try {
-          await action('nodemon');
-        } catch { /* ignore */ }
-      }
-    });
+    process.on('SIGINT', () => void this.trigger('regular'));
+    process.on('SIGUSR2', () => void this.trigger('nodemon'));
   }
 
   do(action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
@@ -29,7 +25,7 @@ class ShutdownHandler {
 
   runTypeDo(runType: RunType, action: (...args: any[]) => void | Promise<void>, ...params: any[]) {
     if(typeof action === 'function') {
-      this.actions.push(async (rt: RunType) => { if(rt == runType) { action(...params); } });
+      this.actions.push(async (rt: RunType) => { if(rt == runType) { return action(...params); } });
     }
     return this;
   }

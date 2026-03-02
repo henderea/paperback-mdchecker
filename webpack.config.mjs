@@ -30,7 +30,7 @@ const plugins = [
 
 if(showProgress) {
   plugins.push(new ProgressPlugin((percentage, message, ...args) => {
-    let percentDisplay = `${Math.round(percentage * 100)}%`.padStart(4, ' ');
+    const percentDisplay = `${Math.round(percentage * 100)}%`.padStart(4, ' ');
     process.stdout.write(`${ansiEscapes.cursorLeft}${ansiEscapes.eraseLine} \u001B[1m${percentDisplay}\u001B[0m${message ? ` - ${message}` : ''}${args.length >= 1 ? ` (${args.filter((a) => !a.includes('./') && !a.includes('node_modules')).join(' - ')})` : ''}${ansiEscapes.cursorLeft}`);
   }));
 }
