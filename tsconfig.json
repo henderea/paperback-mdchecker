@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2024",
     "module": "commonjs",
     "declaration": false,
     "strict": true,
@@ -12,14 +12,13 @@
     "types": [
       "node"
     ],
-    "baseUrl": ".",
     "outDir": "./build",
     "paths": {
       "lib/*": [
-        "lib/*"
+        "./lib/*"
       ],
       "ts-lib/*": [
-        "ts-lib/*"
+        "./ts-lib/*"
       ]
     },
     "typeRoots": [
