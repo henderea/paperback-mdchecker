@@ -281,11 +281,11 @@ async function queryTitles(): Promise<number | false> {
   }
 }
 
-async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: [string, number][] }> {
+async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: Array<[string, number]> }> {
   try {
     const updatedManga: string[] = [];
-    const mangas: [string, number, number, number][] | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
-    const checkedManga: [string, number][] = [];
+    const mangas: Array<[string, number, number, number]> | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
+    const checkedManga: Array<[string, number]> = [];
     if(!mangas || mangas.length == 0) { return { updatedManga, checkedManga }; }
 
     const latestUpdate: number = await getLatestUpdate();

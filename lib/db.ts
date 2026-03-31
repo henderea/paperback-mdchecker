@@ -132,15 +132,15 @@ export async function updateMangaRecordForCheck(userId: string, mangaId: string,
 }
 
 export async function getMangaIdsForQuery(minCheck: number): Promise<string[] | null> {
-  return await scQuery('select distinct manga_id from user_manga where last_check >= $1', [minCheck]);
+  return scQuery('select distinct manga_id from user_manga where last_check >= $1', [minCheck]);
 }
 
 export async function getTitleCheckMangaIds(limit: number, maxCheck: number): Promise<string[] | null> {
-  return await scQuery('select manga_id from user_manga where last_title_check <= $2 group by manga_id order by min(last_title_check) asc, max(last_update) desc, max(last_check) desc, manga_id asc limit $1', [limit, maxCheck]);
+  return scQuery('select manga_id from user_manga where last_title_check <= $2 group by manga_id order by min(last_title_check) asc, max(last_update) desc, max(last_check) desc, manga_id asc limit $1', [limit, maxCheck]);
 }
 
-export async function getDeepCheckMangaIds(limit: number, minCheck: number, maxDeepCheck: number): Promise<[string, number, number, number][] | null> {
-  return await laQuery('select manga_id, max(last_update), max(last_deep_check), max(last_deep_check_find) from user_manga where last_check >= $2 and greatest(last_update, last_deep_check) <= $3 group by manga_id order by min(greatest(last_update, last_deep_check)) asc, max(last_deep_check_find) asc, max(last_update) asc, max(last_check) desc, manga_id asc limit $1', [limit, minCheck, maxDeepCheck]);
+export async function getDeepCheckMangaIds(limit: number, minCheck: number, maxDeepCheck: number): Promise<Array<[string, number, number, number]> | null> {
+  return laQuery('select manga_id, max(last_update), max(last_deep_check), max(last_deep_check_find) from user_manga where last_check >= $2 and greatest(last_update, last_deep_check) <= $3 group by manga_id order by min(greatest(last_update, last_deep_check)) asc, max(last_deep_check_find) asc, max(last_update) asc, max(last_check) desc, manga_id asc limit $1', [limit, minCheck, maxDeepCheck]);
 }
 
 export async function getLatestUpdate(): Promise<number> {
@@ -171,7 +171,7 @@ export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: numb
   await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
 }
 
-export async function updateMangaRecordsForDeepQuery(checkedManga: [string, number][], epoch: number): Promise<void> {
+export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number]>, epoch: number): Promise<void> {
   for(const [mangaId, deepCheckFind] of checkedManga) {
     await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3 where manga_id = $1', [mangaId, epoch, deepCheckFind]);
   }
@@ -221,7 +221,7 @@ export declare interface UserPushUpdateResult {
 }
 
 export async function listUserPushUpdates(epoch: number): Promise<UserPushUpdateResult[] | null> {
-  return await lQuery(`select count(distinct manga_id) as count, user_id, pushover_token, pushover_app_token_override from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token, pushover_app_token_override`, [epoch]);
+  return lQuery(`select count(distinct manga_id) as count, user_id, pushover_token, pushover_app_token_override from user_manga join user_id using (user_id) where pushover_token is not null and pushover_token != '' and last_update = $1 group by user_id, pushover_token, pushover_app_token_override`, [epoch]);
 }
 
 export declare interface UpdateCheckResult {
@@ -231,15 +231,15 @@ export declare interface UpdateCheckResult {
 }
 
 export async function getLatestUpdateCheck(): Promise<UpdateCheckResult | null> {
-  return await srQuery('select check_start_time, check_end_time, update_count from update_check order by check_start_time desc limit 1');
+  return srQuery('select check_start_time, check_end_time, update_count from update_check order by check_start_time desc limit 1');
 }
 
 export async function getUnknownTitles(userId: string, isAdmin: boolean): Promise<string[] | null> {
-  return await scQuery(`select manga_id from user_manga where (manga_title is null or length(manga_title) <= 0) and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
+  return scQuery(`select manga_id from user_manga where (manga_title is null or length(manga_title) <= 0) and user_id = $1${isAdmin ? ' and manga_id not in (select distinct manga_id from failed_titles)' : ''}`, [userId]);
 }
 
 export async function getNonLatinTitles(userId: string): Promise<TitledMangaInfo[] | null> {
-  return await lQuery(`select manga_id, manga_title from user_manga where user_id = $1 and manga_title is not null and length(manga_title) > 0 and manga_title ~* '[^[:alnum:][:blank:][:punct:][:cntrl:]]'`, [userId]);
+  return lQuery(`select manga_id, manga_title from user_manga where user_id = $1 and manga_title is not null and length(manga_title) > 0 and manga_title ~* '[^[:alnum:][:blank:][:punct:][:cntrl:]]'`, [userId]);
 }
 
 export declare interface FailedTitle {
@@ -248,7 +248,7 @@ export declare interface FailedTitle {
 }
 
 export async function getFailedTitles(): Promise<FailedTitle[] | null> {
-  return await lQuery('select manga_id, last_failure from failed_titles order by last_failure desc');
+  return lQuery('select manga_id, last_failure from failed_titles order by last_failure desc');
 }
 
 export async function addFailedTitles(mangaIds: string[], epoch: number): Promise<void> {

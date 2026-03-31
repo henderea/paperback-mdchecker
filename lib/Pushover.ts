@@ -113,7 +113,7 @@ class Message {
       if(this.messageUrlTitle) { form.url_title = this.messageUrlTitle; }
     }
 
-    return await handleApiRequest('https://api.pushover.net/1/messages.json', form);
+    return handleApiRequest('https://api.pushover.net/1/messages.json', form);
   }
 }
 
@@ -129,7 +129,7 @@ export class Pushover {
   async checkUser(): Promise<ApiResult> {
     const token: string = this.apiToken;
     const user: string = this.userToken;
-    return await handleApiRequest('https://api.pushover.net/1/users/validate.json', { token, user });
+    return handleApiRequest('https://api.pushover.net/1/users/validate.json', { token, user });
   }
 
   message(message: string): Message {
