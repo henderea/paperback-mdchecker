@@ -32,10 +32,10 @@
     "removeComments": true
   },
   "include": [
-    "bin/**/*.ts",
-    "src/**/*.ts",
-    "lib/**/*.ts",
-    "ts-types/**/*.ts"
+    "./bin/**/*.ts",
+    "./src/**/*.ts",
+    "./lib/**/*.ts",
+    "./ts-types/**/*.ts"
   ],
   "ts-node": {
     "transpileOnly": true,
