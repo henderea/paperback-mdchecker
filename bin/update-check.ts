@@ -503,7 +503,7 @@ const MAX_TURNS = 30;
 
 shutdownHandler()
   .logIf(`SIGINT signal received (${process.pid}); shutting down`, !noStartStopLogs)
-  .thenDo(ipc.server.stop)
+  .thenDo(() => ipc?.server?.stop())
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
   .thenLogIf(`Shutdown complete (${process.pid})`, !noStartStopLogs)
