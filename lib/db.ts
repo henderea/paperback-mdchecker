@@ -161,26 +161,29 @@ export declare interface MangaTitleCheckInfo extends MangaInfo {
   status: string | null;
   lastVolume: string | null;
   lastChapter: string | null;
+  contentRating: string | null
 }
 
 export declare interface MangaUpdateInfo extends MangaInfo {
   lastUpdate: number;
 }
 
-export async function updateMangaRecordsForQuery(mangaIds: string[], epoch: number): Promise<void> {
-  await query('update user_manga set last_update = $2 where manga_id = ANY ($1)', [mangaIds, epoch]);
+export async function updateMangaRecordsForQuery(mangaIds: Array<[string, string | null]>, epoch: number): Promise<void> {
+  for(const manga of mangaIds) {
+    await query('update user_manga set last_update = $2, latest_group = $3 where manga_id = $1', [manga[0], epoch, manga[1]]);
+  }
 }
 
-export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number]>, epoch: number): Promise<void> {
-  for(const [mangaId, deepCheckFind] of checkedManga) {
-    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3 where manga_id = $1', [mangaId, epoch, deepCheckFind]);
+export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number, string | null]>, epoch: number): Promise<void> {
+  for(const [mangaId, deepCheckFind, latestGroup] of checkedManga) {
+    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3, latest_group = $4 where manga_id = $1', [mangaId, epoch, deepCheckFind, latestGroup]);
   }
 }
 
 export async function updateMangaTitles(mangas: MangaTitleCheckInfo[], epoch: number): Promise<void> {
   for(const manga of mangas) {
     if(manga.title) {
-      await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4, last_volume = $5, last_chapter = $6 where manga_id = $1', [manga.id, manga.title, manga.status, epoch, manga.lastVolume, manga.lastChapter]);
+      await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4, last_volume = $5, last_chapter = $6, manga_content_rating = $7 where manga_id = $1', [manga.id, manga.title, manga.status, epoch, manga.lastVolume, manga.lastChapter, manga.contentRating]);
     }
   }
 }

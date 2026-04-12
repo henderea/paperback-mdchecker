@@ -36,12 +36,12 @@ const DEEP_CHECK_PAUSE_MILLIS: number = 100;
 
 const DEEP_CHECK_PAUSE_ENABLED: boolean = DEEP_CHECK_PAUSE_COUNT > 0 && DEEP_CHECK_PAUSE_MILLIS > 0;
 
-async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: string[] | number | false, hitPageFetchLimit: boolean }> {
+async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: Array<[string, string | null]> | number | false, hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
     let loadNextPage: boolean = true;
     let hitPageFetchLimit: boolean = false;
-    const updatedManga: string[] = [];
+    const updatedManga: Array<[string, string | null]> = [];
     const time: Date = new Date(latestUpdate);
     const updatedAt: string = time.toISOString().split('.')[0];
 
@@ -52,6 +52,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
         .addQueryParameter('offset', offset)
         .addQueryParameter('publishAtSince', updatedAt)
         .addQueryParameter('order', { 'publishAt': 'desc' })
+        .addQueryParameter('includes', ['scanlation_group'])
         .addQueryParameter('translatedLanguage', ['en'])
         .addQueryParameter('includeFutureUpdates', '0')
         .addQueryParameter('contentRating', CONTENT_RATINGS)
@@ -81,9 +82,10 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       for(const chapter of json.data) {
         const pages: number = Number(chapter.attributes.pages);
         const mangaId: string = chapter.relationships.filter((x: any) => x.type == 'manga')[0]?.id;
+        const group: string | null = nullIfEmpty(chapter.relationships.filter((x: any) => x.type == 'scanlation_group').map((x: any) => x.attributes.name).join('; '));
 
-        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.includes(mangaId)) {
-          updatedManga.push(mangaId);
+        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.some((m: [string, string | null]) => m[0] == mangaId)) {
+          updatedManga.push([mangaId, group]);
         }
       }
 
@@ -222,13 +224,14 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
       const status: string = mangaDetails.status;
       const lastVolume: string | null = nullIfEmpty(mangaDetails.lastVolume);
       const lastChapter: string | null = nullIfEmpty(mangaDetails.lastChapter);
+      const contentRating: string | null = nullIfEmpty(mangaDetails.contentRating);
       // const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => x.en ?? Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-      mangas.push({ id, title, status, lastVolume, lastChapter });
+      mangas.push({ id, title, status, lastVolume, lastChapter, contentRating });
     }
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null }));
+    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null, contentRating: null }));
   }
 }
 
@@ -281,11 +284,11 @@ async function queryTitles(): Promise<number | false> {
   }
 }
 
-async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: Array<[string, number]> }> {
+async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: Array<[string, string | null]> | number | false, checkedManga: Array<[string, number, string | null]> }> {
   try {
-    const updatedManga: string[] = [];
+    const updatedManga: Array<[string, string | null]> = [];
     const mangas: Array<[string, number, number, number]> | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
-    const checkedManga: Array<[string, number]> = [];
+    const checkedManga: Array<[string, number, string | null]> = [];
     if(!mangas || mangas.length == 0) { return { updatedManga, checkedManga }; }
 
     const latestUpdate: number = await getLatestUpdate();
@@ -312,6 +315,7 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
         .addQueryParameter('manga', mangaId)
         .addQueryParameter('order', { 'publishAt': 'desc' })
         .addQueryParameter('translatedLanguage', ['en'])
+        .addQueryParameter('includes', ['scanlation_group'])
         .addQueryParameter('includeFutureUpdates', '0')
         .addQueryParameter('includeEmptyPages', '0')
         .addQueryParameter('includeExternalUrl', '0')
@@ -327,7 +331,7 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
 
       // If we have no content, there are no chapters available
       if(response.statusCode == 204) {
-        checkedManga.push([mangaId, lastDeepCheckFind]);
+        checkedManga.push([mangaId, lastDeepCheckFind, null]);
         continue;
       }
 
@@ -341,18 +345,19 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
 
       // no chapters
       if(!json.data || json.data.length == 0) {
-        checkedManga.push([mangaId, lastDeepCheckFind]);
+        checkedManga.push([mangaId, lastDeepCheckFind, null]);
         continue;
       }
 
       const chapter = json.data[0];
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
-      checkedManga.push([mangaId, pages > 0 ? publishAt : lastDeepCheckFind]);
+      const group: string | null = nullIfEmpty(chapter.relationships.filter((x: any) => x.type == 'scanlation_group').map((x: any) => x.attributes.name).join('; '));
+      checkedManga.push([mangaId, pages > 0 ? publishAt : lastDeepCheckFind, group]);
       const minPublish: number = lastUpdate <= lastDeepCheck ? lastDeepCheckFind : lastUpdate;
 
-      if(pages > 0 && publishAt > minPublish && (regularCheckThreshold <= 0 || publishAt <= regularCheckThreshold) && !updatedManga.includes(mangaId)) {
-        updatedManga.push(mangaId);
+      if(pages > 0 && publishAt > minPublish && (regularCheckThreshold <= 0 || publishAt <= regularCheckThreshold) && !updatedManga.some((m: [string, string | null]) => m[0] == mangaId)) {
+        updatedManga.push([mangaId, group]);
       }
     }
 
