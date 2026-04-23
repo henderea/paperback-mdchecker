@@ -170,13 +170,13 @@ export declare interface MangaUpdateInfo extends MangaInfo {
 
 export async function updateMangaRecordsForQuery(mangaIds: Array<[string, string | null]>, epoch: number): Promise<void> {
   for(const manga of mangaIds) {
-    await query('update user_manga set last_update = $2, latest_group = $3 where manga_id = $1', [manga[0], epoch, manga[1]]);
+    await query('update user_manga set last_update = $2, latest_group = $3, has_no_chapters = false where manga_id = $1', [manga[0], epoch, manga[1]]);
   }
 }
 
-export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number, string | null]>, epoch: number): Promise<void> {
-  for(const [mangaId, deepCheckFind, latestGroup] of checkedManga) {
-    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3, latest_group = $4 where manga_id = $1', [mangaId, epoch, deepCheckFind, latestGroup]);
+export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number, string | null, boolean]>, epoch: number): Promise<void> {
+  for(const [mangaId, deepCheckFind, latestGroup, noChapters] of checkedManga) {
+    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3, latest_group = $4, has_no_chapters = $5 where manga_id = $1', [mangaId, epoch, deepCheckFind, latestGroup, noChapters]);
   }
 }
 
