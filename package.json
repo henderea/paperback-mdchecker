@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "got": "^15.0.2",
+    "got": "^15.0.3",
     "html-entities": "^2.6.0",
     "html-minifier-terser": "^7.2.0",
     "http-terminator": "^3.2.0",
