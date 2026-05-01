@@ -36,36 +36,29 @@ const DEEP_CHECK_PAUSE_MILLIS: number = 100;
 
 const DEEP_CHECK_PAUSE_ENABLED: boolean = DEEP_CHECK_PAUSE_COUNT > 0 && DEEP_CHECK_PAUSE_MILLIS > 0;
 
-class SingleRunner<H extends (...args: any[]) => Promise<number> = () => Promise<number>> {
+class RunningFlag {
   private readonly _rejectionMessage: string;
-  private readonly _handler: H;
   private _running: boolean = false;
 
-  private constructor(rejectionMessage: string, handler: H) {
+  constructor(rejectionMessage: string) {
     this._rejectionMessage = rejectionMessage;
-    this._handler = handler;
   }
 
   private get rejectionMessage(): string { return this._rejectionMessage; }
-  private get handler(): H { return this._handler; }
-  get running(): boolean { return this._running; }
+  private get running(): boolean { return this._running; }
+  private set running(value: boolean) { this._running = value; }
 
-  async run(...args: Parameters<H>): Promise<number | false> {
+  checkAndStart(): boolean {
     if(this.running) {
       console.log(this.rejectionMessage);
-      return false;
+      return true;
     }
-    this._running = true;
-    try {
-      return await this.handler(...args);
-    } finally {
-      this._running = false;
-    }
+    this.running = true;
+    return false;
   }
 
-  static wrap<H extends (...args: any[]) => Promise<number> = () => Promise<number>>(rejectionMessage: string, handler: H): (...args: Parameters<H>) => Promise<number | false> {
-    const runner: SingleRunner<H> = new SingleRunner(rejectionMessage, handler);
-    return runner.run.bind(runner);
+  end(): void {
+    this.running = false;
   }
 }
 
@@ -166,7 +159,12 @@ async function sendUserUpdatesPush(epoch: number): Promise<void> {
   }
 }
 
-const queryUpdates: () => Promise<number | false> = SingleRunner.wrap('Already doing update check', async function queryUpdates(): Promise<number> {
+const queryingUpdates: RunningFlag = new RunningFlag('Already doing update check');
+
+async function queryUpdates(): Promise<number | false> {
+  if(queryingUpdates.checkAndStart()) {
+    return false;
+  }
   const epoch: number = Date.now();
   try {
     await addUpdateCheck(epoch);
@@ -204,8 +202,10 @@ const queryUpdates: () => Promise<number | false> = SingleRunner.wrap('Already d
     console.error('Encountered error fetching updates', e);
     await catchVoidError(updateCompletedUpdateCheck(epoch, Date.now(), -2, false), 'Encountered error updating update check result');
     return -2;
+  } finally {
+    queryingUpdates.end();
   }
-});
+}
 
 async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleCheckInfo[]> {
   if(mangaIds.length > PAGE_SIZE) {
@@ -254,7 +254,12 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
   }
 }
 
-const queryTitles: () => Promise<number | false> = SingleRunner.wrap('Already doing title check', async function queryTitles(): Promise<number> {
+const queryingTitles: RunningFlag = new RunningFlag('Already doing title check');
+
+async function queryTitles(): Promise<number | false> {
+  if(queryingTitles.checkAndStart()) {
+    return false;
+  }
   const epoch: number = Date.now();
   try {
     await addTitleCheck(epoch);
@@ -290,8 +295,10 @@ const queryTitles: () => Promise<number | false> = SingleRunner.wrap('Already do
     console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - epoch)}`, e);
     await catchVoidError(updateCompletedTitleCheck(epoch, Date.now(), -2), 'Encountered error updating title check result');
     return -2;
+  } finally {
+    queryingTitles.end();
   }
-});
+}
 
 async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
   try {
@@ -380,7 +387,12 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
   }
 }
 
-const queryUpdatesDeep: (statusHandler?: (cur: number, total: number) => void) => Promise<number | false> = SingleRunner.wrap('Already doing deep update check', async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => void = () => {}): Promise<number> {
+const queryingUpdatesDeep: RunningFlag = new RunningFlag('Already doing deep update check');
+
+async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => void = () => {}): Promise<number | false> {
+  if(queryingUpdatesDeep.checkAndStart()) {
+    return false;
+  }
   const epoch: number = Date.now();
   try {
     await addDeepCheck(epoch);
@@ -417,8 +429,10 @@ const queryUpdatesDeep: (statusHandler?: (cur: number, total: number) => void) =
     console.error('Encountered error deep fetching updates', e);
     await catchVoidError(updateCompletedDeepCheck(epoch, Date.now(), -2, -1), 'Encountered error updating deep check result');
     return -2;
+  } finally {
+    queryingUpdatesDeep.end();
   }
-});
+}
 
 schedule.scheduleJob(updateSchedule, () => void queryUpdates());
 schedule.scheduleJob(titleUpdateSchedule, () => void queryTitles());
