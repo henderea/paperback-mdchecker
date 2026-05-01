@@ -1,16 +1,16 @@
-import type { Socket } from 'node:net';
+// import type { Socket } from 'node:net';
 
 import type { MangaTitleCheckInfo, UserPushUpdateResult, MangaQuerySubmission, MangaDeepQuerySubmission } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
-import fs from 'node:fs';
+// import fs from 'node:fs';
 
 import schedule from 'node-schedule';
 import got from 'got';
 import { decode as decodeHTMLEntity } from 'html-entities';
 
-import ipc from 'node-ipc';
+// import ipc from 'node-ipc';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
@@ -300,7 +300,8 @@ async function queryTitles(): Promise<number | false> {
   }
 }
 
-async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
+// async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
+async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
   try {
     const updatedManga: string[] = [];
     const mangas: Array<[string, number, number, number]> | null = await getDeepCheckMangaIds(DEEP_CHECK_LIMIT, epoch - Duration.DAYS(7), epoch - Duration.DAY + Duration.MINUTE);
@@ -316,7 +317,7 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
     for(const [mangaId, lastUpdate, lastDeepCheck, lastDeepCheckFind] of mangas) {
       if(counter > 0 && counter % DEEP_CHECK_REFRESH_COUNT == 0) {
         await updateInProgressDeepCheck(epoch, checkedManga.length);
-        statusHandler(counter, mangas.length);
+        // statusHandler(counter, mangas.length);
       }
       void updateInProgressDeepCheck(epoch, checkedManga.length);
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
@@ -389,14 +390,16 @@ async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, 
 
 const queryingUpdatesDeep: RunningFlag = new RunningFlag('Already doing deep update check');
 
-async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => void = () => {}): Promise<number | false> {
+// async function queryUpdatesDeep(statusHandler: (cur: number, total: number) => void = () => {}): Promise<number | false> {
+async function queryUpdatesDeep(): Promise<number | false> {
   if(queryingUpdatesDeep.checkAndStart()) {
     return false;
   }
   const epoch: number = Date.now();
   try {
     await addDeepCheck(epoch);
-    const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch, statusHandler);
+    // const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch, statusHandler);
+    const { updatedManga, checkedManga } = await findUpdatedMangaDeep(epoch);
     if(!checkedManga || checkedManga.length == 0) { // no manga to check
       await updateCompletedDeepCheck(epoch, Date.now(), -1, 0);
       return -1;
@@ -438,81 +441,81 @@ schedule.scheduleJob(updateSchedule, () => void queryUpdates());
 schedule.scheduleJob(titleUpdateSchedule, () => void queryTitles());
 schedule.scheduleJob(deepCheckSchedule, () => void queryUpdatesDeep());
 
-ipc.config.id = 'mdcUpdateChecker';
-ipc.config.retry = 1500;
-ipc.config.sync = false;
-ipc.config.silent = true;
-// ipc.config.logDepth = 1;
-// ipc.config.unlink = false;
-ipc.config.logInColor = false;
-ipc.config.writableAll = true;
-ipc.config.readableAll = true;
+// ipc.config.id = 'mdcUpdateChecker';
+// ipc.config.retry = 1500;
+// ipc.config.sync = false;
+// ipc.config.silent = true;
+// // ipc.config.logDepth = 1;
+// // ipc.config.unlink = false;
+// ipc.config.logInColor = false;
+// ipc.config.writableAll = true;
+// ipc.config.readableAll = true;
 
-async function handleTrigger(command: string, socket: Socket): Promise<void> {
-  if(command === 'title-check') {
-    const rv: number | false = await queryTitles();
-    if(rv === false) {
-      ipc.server.emit(socket, 'already-running');
-    } else if(rv === -1) {
-      ipc.server.emit(socket, 'no-items');
-    } else if(rv < 0) {
-      ipc.server.emit(socket, 'failure', String(rv));
-    } else {
-      ipc.server.emit(socket, 'success', String(rv));
-    }
-  } else if(command === 'deep-check') {
-    const rv: number | false = await queryUpdatesDeep((cur: number, total: number) => {
-      const len: number = String(total).length;
-      ipc.server.emit(socket, 'progress', `${String(cur).padStart(len)}/${total} (${Math.round((cur * 1000.0) / total) / 10.0}%)`);
-    });
-    if(rv === false) {
-      ipc.server.emit(socket, 'already-running');
-    } else if(rv === -1) {
-      ipc.server.emit(socket, 'no-items');
-    } else if(rv < 0) {
-      ipc.server.emit(socket, 'failure', String(rv));
-    } else {
-      ipc.server.emit(socket, 'success', String(rv));
-    }
-  } else {
-    ipc.server.emit(socket, 'unsupported');
-  }
-}
+// async function handleTrigger(command: string, socket: Socket): Promise<void> {
+//   if(command === 'title-check') {
+//     const rv: number | false = await queryTitles();
+//     if(rv === false) {
+//       ipc.server.emit(socket, 'already-running');
+//     } else if(rv === -1) {
+//       ipc.server.emit(socket, 'no-items');
+//     } else if(rv < 0) {
+//       ipc.server.emit(socket, 'failure', String(rv));
+//     } else {
+//       ipc.server.emit(socket, 'success', String(rv));
+//     }
+//   } else if(command === 'deep-check') {
+//     const rv: number | false = await queryUpdatesDeep((cur: number, total: number) => {
+//       const len: number = String(total).length;
+//       ipc.server.emit(socket, 'progress', `${String(cur).padStart(len)}/${total} (${Math.round((cur * 1000.0) / total) / 10.0}%)`);
+//     });
+//     if(rv === false) {
+//       ipc.server.emit(socket, 'already-running');
+//     } else if(rv === -1) {
+//       ipc.server.emit(socket, 'no-items');
+//     } else if(rv < 0) {
+//       ipc.server.emit(socket, 'failure', String(rv));
+//     } else {
+//       ipc.server.emit(socket, 'success', String(rv));
+//     }
+//   } else {
+//     ipc.server.emit(socket, 'unsupported');
+//   }
+// }
 
-ipc.serve(() => {
-  // console.log(`IPC started up (${process.pid})`);
-  ipc.server.on('error', (e) => {
-    console.error('Encountered error setting up IPC', e);
-  }).on('trigger', (command: string, socket: Socket) => void handleTrigger(command, socket));
-});
+// ipc.serve(() => {
+//   // console.log(`IPC started up (${process.pid})`);
+//   ipc.server.on('error', (e) => {
+//     console.error('Encountered error setting up IPC', e);
+//   }).on('trigger', (command: string, socket: Socket) => void handleTrigger(command, socket));
+// });
 
-const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
+// const ipcPath: string = ipc.config.socketRoot + ipc.config.appspace + ipc.config.id;
 
-const MAX_TURNS = 30;
+// const MAX_TURNS = 30;
 
-(async () => {
-  let turns: number = 0;
-  while(turns < MAX_TURNS) {
-    turns++;
-    if(fs.existsSync(ipcPath)) {
-      await timeout(1000);
-    } else {
-      break;
-    }
-  }
-  if(fs.existsSync(ipcPath)) {
-    console.log('Done waiting; unlinking IPC');
-    fs.unlinkSync(ipcPath);
-  }
-  ipc.server.start();
-})().catch((e: any) => {
-  console.log(e);
-  process.exit(1);
-});
+// (async () => {
+//   let turns: number = 0;
+//   while(turns < MAX_TURNS) {
+//     turns++;
+//     if(fs.existsSync(ipcPath)) {
+//       await timeout(1000);
+//     } else {
+//       break;
+//     }
+//   }
+//   if(fs.existsSync(ipcPath)) {
+//     console.log('Done waiting; unlinking IPC');
+//     fs.unlinkSync(ipcPath);
+//   }
+//   ipc.server.start();
+// })().catch((e: any) => {
+//   console.log(e);
+//   process.exit(1);
+// });
 
 shutdownHandler()
   .logIf(`SIGINT signal received (${process.pid}); shutting down`, !noStartStopLogs)
-  .thenDo(() => ipc?.server?.stop())
+  // .thenDo(() => ipc?.server?.stop())
   .thenDo(schedule.gracefulShutdown)
   .thenDo(shutdownClient)
   .thenLogIf(`Shutdown complete (${process.pid})`, !noStartStopLogs)
