@@ -30,8 +30,8 @@ const PAGE_SIZE: number = 100;
 const CONTENT_RATINGS: string[] = ['safe', 'suggestive', 'erotica', 'pornographic'];
 
 const DEEP_CHECK_LIMIT: number = 200;
-const DEEP_CHECK_REFRESH_COUNT: number = 10;
-const DEEP_CHECK_PAUSE_COUNT: number = 5;
+const DEEP_CHECK_REFRESH_COUNT: number = 20;
+const DEEP_CHECK_PAUSE_COUNT: number = 10;
 const DEEP_CHECK_PAUSE_MILLIS: number = 100;
 
 const DEEP_CHECK_PAUSE_ENABLED: boolean = DEEP_CHECK_PAUSE_COUNT > 0 && DEEP_CHECK_PAUSE_MILLIS > 0;
