@@ -21,6 +21,7 @@ create table user_manga (
   last_title_check bigint not null default 0,
   last_deep_check bigint not null default 0,
   last_deep_check_find bigint not null default 0,
+  first_no_chapter_find bigint not null default 0,
   constraint pk_user_manga primary key (user_id, manga_id),
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );
@@ -51,7 +52,8 @@ create or replace view user_manga_view as
          case when last_volume is null and last_chapter is null then null when last_volume is null then 'c' || last_chapter when last_chapter is null then 'v' || last_volume else 'v' || last_volume || ' c' || last_chapter end as ends_at,
          case when last_title_check = 0 then null else timezone('US/Eastern', to_timestamp(last_title_check / 1000.0)) end as last_title_check,
          case when last_deep_check = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check / 1000.0)) end as last_deep_check,
-         case when last_deep_check_find = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check_find / 1000.0)) end as last_deep_check_find
+         case when last_deep_check_find = 0 then null else timezone('US/Eastern', to_timestamp(last_deep_check_find / 1000.0)) end as last_deep_check_find,
+         case when first_no_chapter_find = 0 then null else timezone('US/Eastern', to_timestamp(first_no_chapter_find / 1000.0)) end as first_no_chapter_find
   from user_manga;
 
 create table update_check (

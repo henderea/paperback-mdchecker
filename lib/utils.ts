@@ -1,3 +1,11 @@
+import map from 'lodash/map.js';
+import filter from 'lodash/filter.js';
+import compact from 'lodash/compact.js';
+import difference from 'lodash/difference.js';
+import some from 'lodash/some.js';
+
+export const _ = { map, filter, compact, difference, some } as const;
+
 class Durations {
   get SECOND(): number { return 1000; }
   get MINUTE(): number { return this.SECONDS(60); }

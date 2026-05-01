@@ -1,6 +1,6 @@
 import type { QueryResult, QueryResultRow } from 'pg';
 
-import { ensureInt } from './utils';
+import { ensureInt, _ } from './utils';
 
 import { Client } from 'pg';
 
@@ -41,7 +41,7 @@ async function scQuery<T>(text: string, values: any[] = []): Promise<T[] | null>
   if(resultEmpty(result)) {
     return null;
   }
-  return result.rows.map((r: [T]) => r[0]);
+  return _.map(result.rows, 0);
 }
 
 async function srQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<T | null> {
@@ -168,15 +168,35 @@ export declare interface MangaUpdateInfo extends MangaInfo {
   lastUpdate: number;
 }
 
-export async function updateMangaRecordsForQuery(mangaIds: Array<[string, string | null]>, epoch: number): Promise<void> {
-  for(const manga of mangaIds) {
-    await query('update user_manga set last_update = $2, latest_group = $3, has_no_chapters = false where manga_id = $1', [manga[0], epoch, manga[1]]);
+export declare interface MangaQuerySubmission {
+  mangaId: string;
+  latestGroup: string | null;
+}
+
+export async function updateMangaRecordsForQuery(mangaIds: MangaQuerySubmission[] | { mangaIds: string[] }, epoch: number): Promise<void> {
+  if(Array.isArray(mangaIds)) {
+    for(const { mangaId, latestGroup } of mangaIds) {
+      await query('update user_manga set last_update = $2, latest_group = $3, has_no_chapters = false where manga_id = $1', [mangaId, epoch, latestGroup]);
+    }
+  } else {
+    await query('update user_manga set last_update = $2, has_no_chapters = false where manga_id = ANY ($1)', [mangaIds.mangaIds, epoch]);
   }
 }
 
-export async function updateMangaRecordsForDeepQuery(checkedManga: Array<[string, number, string | null, boolean]>, epoch: number): Promise<void> {
-  for(const [mangaId, deepCheckFind, latestGroup, noChapters] of checkedManga) {
-    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3, latest_group = $4, has_no_chapters = $5 where manga_id = $1', [mangaId, epoch, deepCheckFind, latestGroup, noChapters]);
+export declare interface MangaDeepQuerySubmission {
+  mangaId: string;
+  lastDeepCheckFind: number;
+  latestGroup: string | null;
+  noChapters: boolean;
+}
+
+export async function updateMangaRecordsForDeepQuery(checkedManga: MangaDeepQuerySubmission[], epoch: number): Promise<void> {
+  const noChapterManga = _.map(_.filter(checkedManga, 'noChapters'), 'mangaId');
+  if(noChapterManga.length > 0) {
+    await query('update user_manga set first_no_chapter_find = $2 where manga_id = ANY ($1) and has_no_chapters = false', [noChapterManga, epoch]);
+  }
+  for(const { mangaId, lastDeepCheckFind, latestGroup, noChapters } of checkedManga) {
+    await query('update user_manga set last_deep_check = $2, last_deep_check_find = $3, latest_group = $4, has_no_chapters = $5 where manga_id = $1', [mangaId, epoch, lastDeepCheckFind, latestGroup, noChapters]);
   }
 }
 

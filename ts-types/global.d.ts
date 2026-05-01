@@ -7,6 +7,12 @@ declare interface Dictionary<T> {
   [index: string]: T;
 }
 
+declare interface NumericDictionary<T> {
+  [index: number]: T;
+}
+
+declare type AnyDictionary<T> = Dictionary<T> | NumericDictionary<T>;
+
 // declare module 'got' {
 //   import * as got from 'got/dist/source';
 //   export = got;
