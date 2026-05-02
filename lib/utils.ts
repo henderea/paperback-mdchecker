@@ -79,33 +79,5 @@ export function nullIfEmpty(text: string | null | undefined): string | null {
 }
 
 export function compactStrings(arr: Array<string | null | undefined>): string[] {
-  return arr.filter(nullIfEmpty) as string[];
+  return arr.filter((v) => v && v.length > 0) as string[];
 }
-
-function f<T extends AnyDictionary<any>, K extends keyof T>(key: K): (t: T) => T[K];
-function f<T extends AnyDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key1: K1, key2: K2): (t: T) => T[K1][K2];
-function f<T extends Dictionary<any>, K extends keyof T>(key: K): (t: T) => T[K];
-function f<T extends Dictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key1: K1, key2: K2): (t: T) => T[K1][K2];
-function f<T extends NumericDictionary<any>, K extends keyof T>(key: K): (t: T) => T[K];
-function f<T extends NumericDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key1: K1, key2: K2): (t: T) => T[K1][K2];
-function f<T extends AnyDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key1: K1, key2?: K2): (t: T) => any {
-  if(key2) {
-    return (t: T) => t?.[key1]?.[key2];
-  }
-  return (t: T) => t?.[key1];
-}
-
-function fe<T extends AnyDictionary<any>, K extends keyof T>(key: K, val: T[K]): (t: T) => boolean;
-function fe<T extends AnyDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key: [key1: K1, key2: K2], val: T[K1][K2]): (t: T) => boolean;
-function fe<T extends Dictionary<any>, K extends keyof T>(key: K, val: T[K]): (t: T) => boolean;
-function fe<T extends Dictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key: [key1: K1, key2: K2], val: T[K1][K2]): (t: T) => boolean;
-function fe<T extends NumericDictionary<any>, K extends keyof T>(key: K, val: T[K]): (t: T) => boolean;
-function fe<T extends NumericDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key: [key1: K1, key2: K2], val: T[K1][K2]): (t: T) => boolean;
-function fe<T extends AnyDictionary<any>, K1 extends keyof T, K2 extends keyof T[K1]>(key: K1 | [key1: K1, key2: K2], val: any): (t: T) => boolean {
-  if(Array.isArray(key)) {
-    return (t: T) => t?.[key[0]]?.[key[1]] === val;
-  }
-  return (t: T) => t?.[key] === val;
-}
-
-export { f, fe };

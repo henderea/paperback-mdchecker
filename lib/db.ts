@@ -1,6 +1,6 @@
 import type { QueryResult, QueryResultRow } from 'pg';
 
-import { ensureInt, f } from './utils';
+import { ensureInt } from './utils';
 
 import { Client } from 'pg';
 
@@ -41,7 +41,7 @@ async function scQuery<T>(text: string, values: any[] = []): Promise<T[] | null>
   if(resultEmpty(result)) {
     return null;
   }
-  return result.rows.map(f(0));
+  return result.rows.map((r) => r[0]);
 }
 
 async function srQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<T | null> {
@@ -191,7 +191,7 @@ export declare interface MangaDeepQuerySubmission {
 }
 
 export async function updateMangaRecordsForDeepQuery(checkedManga: MangaDeepQuerySubmission[], epoch: number): Promise<void> {
-  const noChapterManga = checkedManga.filter(f('noChapters')).map(f('mangaId'));
+  const noChapterManga = checkedManga.filter((m) => m.noChapters).map((m) => m.mangaId);
   if(noChapterManga.length > 0) {
     await query('update user_manga set first_no_chapter_find = $2 where manga_id = ANY ($1) and has_no_chapters = false', [noChapterManga, epoch]);
   }

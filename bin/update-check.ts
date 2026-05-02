@@ -20,7 +20,7 @@ import { shutdownHandler } from 'lib/ShutdownHandler';
 
 import _difference from 'lodash/difference.js';
 
-import { Duration, catchVoidError, ensureInt, formatDuration, timeout, nullIfEmpty, f, fe, compactStrings } from 'lib/utils';
+import { Duration, catchVoidError, ensureInt, formatDuration, timeout, nullIfEmpty, compactStrings } from 'lib/utils';
 import { Pushover } from 'lib/Pushover';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
@@ -62,6 +62,16 @@ class RunningFlag {
   end(): void {
     this.running = false;
   }
+}
+
+function rels(entity: { relationships: any[] }, type: string): any[] {
+  return entity.relationships.filter((r: any) => r.type == type);
+}
+
+function parseChapterCommon(chapter: any): { pages: number, latestGroup: string | null } {
+  const pages: number = Number(chapter.attributes.pages);
+  const latestGroup: string | null = nullIfEmpty(rels(chapter, 'scanlation_group').map((r) => r.attributes.name).join('; '));
+  return { pages, latestGroup };
 }
 
 const queryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
@@ -108,11 +118,10 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       }
 
       for(const chapter of json.data) {
-        const pages: number = Number(chapter.attributes.pages);
-        const mangaId: string = chapter.relationships.filter(fe('type', 'manga'))[0]?.id;
-        const latestGroup: string | null = nullIfEmpty(chapter.relationships.filter(fe('type', 'scanlation_group')).map(f('attributes', 'name')).join('; '));
+        const { pages, latestGroup } = parseChapterCommon(chapter);
+        const mangaId: string = rels(chapter, 'manga')[0]?.id;
 
-        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.some(fe('mangaId', mangaId))) {
+        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.some((m) => m.mangaId == mangaId)) {
           updatedManga.push({ mangaId, latestGroup });
         }
       }
@@ -274,7 +283,7 @@ async function queryTitles(): Promise<number | false> {
         // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
         await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
-          const fetchedIds: string[] = mangas.map(f('id'));
+          const fetchedIds: string[] = mangas.map((m) => m.id);
           const missingIds: string[] = _difference(mangaIds, fetchedIds);
           const missingCount: number = missingIds.length;
           if(missingCount > 0) {
@@ -371,14 +380,17 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
       }
 
       const chapter = json.data[0];
-      const pages: number = Number(chapter.attributes.pages);
-      const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
-      const latestGroup: string | null = nullIfEmpty(chapter.relationships.filter(fe('type', 'scanlation_group')).map(f('attributes', 'name')).join('; '));
-      checkedManga.push({ mangaId, lastDeepCheckFind: pages > 0 ? publishAt : lastDeepCheckFind, latestGroup, noChapters: false });
-      const minPublish: number = lastUpdate <= lastDeepCheck ? lastDeepCheckFind : lastUpdate;
+      const { pages, latestGroup } = parseChapterCommon(chapter);
+      if(pages > 0) {
+        const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
+        checkedManga.push({ mangaId, lastDeepCheckFind: publishAt, latestGroup, noChapters: false });
+        const minPublish: number = lastUpdate <= lastDeepCheck ? lastDeepCheckFind : lastUpdate;
 
-      if(pages > 0 && publishAt > minPublish && (regularCheckThreshold <= 0 || publishAt <= regularCheckThreshold) && !updatedManga.includes(mangaId)) {
-        updatedManga.push(mangaId);
+        if(publishAt > minPublish && (regularCheckThreshold <= 0 || publishAt <= regularCheckThreshold) && !updatedManga.includes(mangaId)) {
+          updatedManga.push(mangaId);
+        }
+      } else {
+        checkedManga.push({ mangaId, lastDeepCheckFind, latestGroup, noChapters: false });
       }
     }
 
