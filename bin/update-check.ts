@@ -14,7 +14,7 @@ import { decode as decodeHTMLEntity } from 'html-entities';
 
 import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
 
-import { URLBuilder } from 'lib/UrlBuilder';
+import { URLBuilder, PreCompiledUrl } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
@@ -62,6 +62,16 @@ class RunningFlag {
   }
 }
 
+const queryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
+  .addPathComponent('chapter')
+  .addQueryParameter('limit', PAGE_SIZE)
+  .addQueryParameter('order', { 'publishAt': 'desc' })
+  .addQueryParameter('includes', ['scanlation_group'])
+  .addQueryParameter('translatedLanguage', ['en'])
+  .addQueryParameter('includeFutureUpdates', '0')
+  .addQueryParameter('contentRating', CONTENT_RATINGS)
+  .preCompile();
+
 async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: MangaQuerySubmission[] | number | false, hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
@@ -72,17 +82,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
     const updatedAt: string = time.toISOString().split('.')[0];
 
     while(loadNextPage) {
-      const url: string = new URLBuilder(MANGADEX_API)
-        .addPathComponent('chapter')
-        .addQueryParameter('limit', PAGE_SIZE)
-        .addQueryParameter('offset', offset)
-        .addQueryParameter('publishAtSince', updatedAt)
-        .addQueryParameter('order', { 'publishAt': 'desc' })
-        .addQueryParameter('includes', ['scanlation_group'])
-        .addQueryParameter('translatedLanguage', ['en'])
-        .addQueryParameter('includeFutureUpdates', '0')
-        .addQueryParameter('contentRating', CONTENT_RATINGS)
-        .buildUrl();
+      const url: string = queryUrl.buildUrl({ offset, publishAtSince: updatedAt });
 
       const response = await got(url, {
         headers: {
@@ -207,18 +207,19 @@ async function queryUpdates(): Promise<number | false> {
   }
 }
 
+const titleQueryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
+  .addPathComponent('manga')
+  .addQueryParameter('limit', PAGE_SIZE)
+  .addQueryParameter('contentRating', CONTENT_RATINGS)
+  .preCompile();
+
 async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleCheckInfo[]> {
   if(mangaIds.length > PAGE_SIZE) {
     mangaIds = mangaIds.slice(0, PAGE_SIZE);
   }
   try {
     const mangas: MangaTitleCheckInfo[] = [];
-    const url: string = new URLBuilder(MANGADEX_API)
-      .addPathComponent('manga')
-      .addQueryParameter('limit', PAGE_SIZE)
-      .addQueryParameter('ids', mangaIds)
-      .addQueryParameter('contentRating', CONTENT_RATINGS)
-      .buildUrl();
+    const url: string = titleQueryUrl.buildUrl({ ids: mangaIds });
 
     const response = await got(url, {
       headers: {
@@ -300,6 +301,18 @@ async function queryTitles(): Promise<number | false> {
   }
 }
 
+const deepQueryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
+  .addPathComponent('chapter')
+  .addQueryParameter('limit', 1)
+  .addQueryParameter('order', { 'publishAt': 'desc' })
+  .addQueryParameter('translatedLanguage', ['en'])
+  .addQueryParameter('includes', ['scanlation_group'])
+  .addQueryParameter('includeFutureUpdates', '0')
+  .addQueryParameter('includeEmptyPages', '0')
+  .addQueryParameter('includeExternalUrl', '0')
+  .addQueryParameter('contentRating', CONTENT_RATINGS)
+  .preCompile();
+
 // async function findUpdatedMangaDeep(epoch: number, statusHandler: (cur: number, total: number) => void): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
 async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: string[] | number | false, checkedManga: MangaDeepQuerySubmission[] }> {
   try {
@@ -319,25 +332,14 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
         await updateInProgressDeepCheck(epoch, checkedManga.length);
         // statusHandler(counter, mangas.length);
       }
-      void updateInProgressDeepCheck(epoch, checkedManga.length);
+      // void updateInProgressDeepCheck(epoch, checkedManga.length);
       if(DEEP_CHECK_PAUSE_ENABLED && counter > 0 && counter % DEEP_CHECK_PAUSE_COUNT == 0) {
         await timeout(DEEP_CHECK_PAUSE_MILLIS);
       }
 
       counter++;
 
-      const url: string = new URLBuilder(MANGADEX_API)
-        .addPathComponent('chapter')
-        .addQueryParameter('limit', 1)
-        .addQueryParameter('manga', mangaId)
-        .addQueryParameter('order', { 'publishAt': 'desc' })
-        .addQueryParameter('translatedLanguage', ['en'])
-        .addQueryParameter('includes', ['scanlation_group'])
-        .addQueryParameter('includeFutureUpdates', '0')
-        .addQueryParameter('includeEmptyPages', '0')
-        .addQueryParameter('includeExternalUrl', '0')
-        .addQueryParameter('contentRating', CONTENT_RATINGS)
-        .buildUrl();
+      const url: string = deepQueryUrl.buildUrl({ manga: mangaId });
 
       const response = await got(url, {
         headers: {

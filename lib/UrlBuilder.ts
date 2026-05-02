@@ -1,11 +1,55 @@
+import { nullIfEmpty, _ } from './utils';
+
+function processParams(parameters: Dictionary<any>, includeUndefinedParameters: boolean): string[] {
+  return _.compact(Object.entries(parameters).flatMap((entry) => {
+    if(!entry[1] && !includeUndefinedParameters) { return []; }
+
+    if(Array.isArray(entry[1])) {
+      return _.map(entry[1], (value) => value || includeUndefinedParameters ? `${entry[0]}[]=${value}` : undefined);
+    }
+
+    if(typeof entry[1] === 'object') {
+      return _.map(Object.keys(entry[1]), (key) => entry[1][key] || includeUndefinedParameters ? `${entry[0]}[${key}]=${entry[1][key]}` : undefined);
+    }
+
+    return [`${entry[0]}=${entry[1]}`];
+  }));
+}
+
+export class PreCompiledUrl {
+  private readonly _url: string;
+  private readonly _builtParams: string | null;
+  private readonly _includeUndefinedParameters: boolean;
+
+  constructor(url: string, builtParams: string | null, includeUndefinedParameters: boolean) {
+    this._url = url;
+    this._builtParams = nullIfEmpty(builtParams);
+    this._includeUndefinedParameters = includeUndefinedParameters;
+  }
+
+  private get url(): string { return this._url; }
+  private get builtParams(): string | null { return this._builtParams; }
+  private get includeUndefinedParameters(): boolean { return this._includeUndefinedParameters; }
+
+  buildUrl(extraParams: Dictionary<any>): string {
+    const processedExtraParams: string = processParams(extraParams, this.includeUndefinedParameters).join('&');
+    const builtParams: string = _.compact([this.builtParams, processedExtraParams]).join('&');
+    return this.url + (builtParams == '' ? '' : `?${builtParams}`);
+  }
+}
+
 export class URLBuilder {
-  private readonly parameters: Dictionary<any> = {};
-  private readonly pathComponents: string[] = [];
-  private readonly baseUrl: string;
+  private readonly _parameters: Dictionary<any> = {};
+  private readonly _pathComponents: string[] = [];
+  private readonly _baseUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl.replace(/(^\/)?(?=.*)(\/$)?/gim, '');
+    this._baseUrl = baseUrl.replace(/(^\/)?(?=.*)(\/$)?/gim, '');
   }
+
+  private get parameters(): Dictionary<any> { return this._parameters; }
+  private get pathComponents(): string[] { return this._pathComponents; }
+  private get baseUrl(): string { return this._baseUrl; }
 
   addPathComponent(component: string): this {
     this.pathComponents.push(component.replace(/(^\/)?(?=.*)(\/$)?/gim, ''));
@@ -18,29 +62,15 @@ export class URLBuilder {
   }
 
   buildUrl({ addTrailingSlash, includeUndefinedParameters } = { addTrailingSlash: false, includeUndefinedParameters: false }): string {
-    let finalUrl: string = this.baseUrl + '/';
+    const finalUrl: string = [this.baseUrl, ...this.pathComponents].join('/') + (addTrailingSlash ? '/' : '');
+    const builtParams: string = processParams(this.parameters, includeUndefinedParameters).join('&');
+    return finalUrl + (builtParams == '' ? '' : `?${builtParams}`);
+  }
 
-    finalUrl += this.pathComponents.join('/');
-    finalUrl += addTrailingSlash ? '/' : '';
-    finalUrl += Object.values(this.parameters).length > 0 ? '?' : '';
-    finalUrl += Object.entries(this.parameters).map((entry) => {
-      if(!entry[1] && !includeUndefinedParameters) { return undefined; }
+  preCompile({ addTrailingSlash, includeUndefinedParameters } = { addTrailingSlash: false, includeUndefinedParameters: false }): PreCompiledUrl {
+    const finalUrl: string = [this.baseUrl, ...this.pathComponents].join('/') + (addTrailingSlash ? '/' : '');
+    const builtParams: string = processParams(this.parameters, includeUndefinedParameters).join('&');
 
-      if(Array.isArray(entry[1])) {
-        return entry[1].map((value) => value || includeUndefinedParameters ? `${entry[0]}[]=${value}` : undefined)
-          .filter((x) => x !== undefined)
-          .join('&');
-      }
-
-      if(typeof entry[1] === 'object') {
-        return Object.keys(entry[1]).map((key) => entry[1][key] || includeUndefinedParameters ? `${entry[0]}[${key}]=${entry[1][key]}` : undefined)
-          .filter((x) => x !== undefined)
-          .join('&');
-      }
-
-      return `${entry[0]}=${entry[1]}`;
-    }).filter((x) => x !== undefined).join('&');
-
-    return finalUrl;
+    return new PreCompiledUrl(finalUrl, builtParams, includeUndefinedParameters);
   }
 }
