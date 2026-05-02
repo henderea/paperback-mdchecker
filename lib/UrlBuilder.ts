@@ -1,15 +1,15 @@
-import { nullIfEmpty, _ } from './utils';
+import { nullIfEmpty, compactStrings } from './utils';
 
 function processParams(parameters: Dictionary<any>, includeUndefinedParameters: boolean): string[] {
-  return _.compact(Object.entries(parameters).flatMap((entry) => {
+  return compactStrings(Object.entries(parameters).flatMap((entry) => {
     if(!entry[1] && !includeUndefinedParameters) { return []; }
 
     if(Array.isArray(entry[1])) {
-      return _.map(entry[1], (value) => value || includeUndefinedParameters ? `${entry[0]}[]=${value}` : undefined);
+      return entry[1].map((value) => value || includeUndefinedParameters ? `${entry[0]}[]=${value}` : undefined);
     }
 
     if(typeof entry[1] === 'object') {
-      return _.map(Object.keys(entry[1]), (key) => entry[1][key] || includeUndefinedParameters ? `${entry[0]}[${key}]=${entry[1][key]}` : undefined);
+      return Object.keys(entry[1]).map((key) => entry[1][key] || includeUndefinedParameters ? `${entry[0]}[${key}]=${entry[1][key]}` : undefined);
     }
 
     return [`${entry[0]}=${entry[1]}`];
@@ -33,7 +33,7 @@ export class PreCompiledUrl {
 
   buildUrl(extraParams: Dictionary<any>): string {
     const processedExtraParams: string = processParams(extraParams, this.includeUndefinedParameters).join('&');
-    const builtParams: string = _.compact([this.builtParams, processedExtraParams]).join('&');
+    const builtParams: string = compactStrings([this.builtParams, processedExtraParams]).join('&');
     return this.url + (builtParams == '' ? '' : `?${builtParams}`);
   }
 }

@@ -18,7 +18,9 @@ import { URLBuilder, PreCompiledUrl } from 'lib/UrlBuilder';
 
 import { shutdownHandler } from 'lib/ShutdownHandler';
 
-import { Duration, catchVoidError, ensureInt, formatDuration, timeout, nullIfEmpty, _ } from 'lib/utils';
+import _difference from 'lodash/difference.js';
+
+import { Duration, catchVoidError, ensureInt, formatDuration, timeout, nullIfEmpty, f, fe, compactStrings } from 'lib/utils';
 import { Pushover } from 'lib/Pushover';
 
 const MANGADEX_DOMAIN: string = 'https://mangadex.org';
@@ -107,10 +109,10 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
 
       for(const chapter of json.data) {
         const pages: number = Number(chapter.attributes.pages);
-        const mangaId: string = _.filter(chapter.relationships, ['type', 'manga'])[0]?.id;
-        const latestGroup: string | null = nullIfEmpty(_.map(_.filter(chapter.relationships, ['type', 'scanlation_group']), 'attributes.name').join('; '));
+        const mangaId: string = chapter.relationships.filter(fe('type', 'manga'))[0]?.id;
+        const latestGroup: string | null = nullIfEmpty(chapter.relationships.filter(fe('type', 'scanlation_group')).map(f('attributes', 'name')).join('; '));
 
-        if(pages > 0 && mangaIds.includes(mangaId) && !_.some(updatedManga, ['mangaId', mangaId])) {
+        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.some(fe('mangaId', mangaId))) {
           updatedManga.push({ mangaId, latestGroup });
         }
       }
@@ -239,7 +241,7 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
     for(const manga of json.data) {
       const id = manga.id;
       const mangaDetails = manga.attributes;
-      const titles: string[] = _.map(_.compact<string>([...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))]), (x: string) => decodeHTMLEntity(x));
+      const titles: string[] = compactStrings([...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x: never) => Object.values(x))]).map((x: string) => decodeHTMLEntity(x));
       const title: string | null = titles.find((t) => /[a-zA-Z]/.test(t)) ?? titles[0] ?? null;
       const status: string = mangaDetails.status;
       const lastVolume: string | null = nullIfEmpty(mangaDetails.lastVolume);
@@ -251,7 +253,7 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return _.map(mangaIds, (id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null, contentRating: null }));
+    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null, contentRating: null }));
   }
 }
 
@@ -272,8 +274,8 @@ async function queryTitles(): Promise<number | false> {
         // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
         await cleanFailedTitles(mangaIds);
         if(mangas.length < mangaIds.length && mangas.length < PAGE_SIZE) {
-          const fetchedIds: string[] = _.map(mangas, 'id');
-          const missingIds: string[] = _.difference(mangaIds, fetchedIds);
+          const fetchedIds: string[] = mangas.map(f('id'));
+          const missingIds: string[] = _difference(mangaIds, fetchedIds);
           const missingCount: number = missingIds.length;
           if(missingCount > 0) {
             console.log(`Failed title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
@@ -371,7 +373,7 @@ async function findUpdatedMangaDeep(epoch: number): Promise<{ updatedManga: stri
       const chapter = json.data[0];
       const pages: number = Number(chapter.attributes.pages);
       const publishAt: number = new Date(chapter.attributes.publishAt).getTime();
-      const latestGroup: string | null = nullIfEmpty(_.map(_.filter(chapter.relationships, ['type', 'scanlation_group']), 'attributes.name').join('; '));
+      const latestGroup: string | null = nullIfEmpty(chapter.relationships.filter(fe('type', 'scanlation_group')).map(f('attributes', 'name')).join('; '));
       checkedManga.push({ mangaId, lastDeepCheckFind: pages > 0 ? publishAt : lastDeepCheckFind, latestGroup, noChapters: false });
       const minPublish: number = lastUpdate <= lastDeepCheck ? lastDeepCheckFind : lastUpdate;
 
