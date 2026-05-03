@@ -1,6 +1,6 @@
 // import type { Socket } from 'node:net';
 
-import type { MangaTitleCheckInfo, UserPushUpdateResult, MangaQuerySubmission, MangaDeepQuerySubmission } from 'lib/db';
+import type { MangaTitleCheckInfo, UserPushUpdateResult, MangaQuerySubmission, PotentialMangaQuerySubmission, MangaDeepQuerySubmission } from 'lib/db';
 
 import { updateSchedule, titleUpdateSchedule, deepCheckSchedule, noStartStopLogs, pushoverAppToken } from 'lib/env';
 
@@ -68,10 +68,11 @@ function rels(entity: { relationships: any[] }, type: string): any[] {
   return entity.relationships.filter((r: any) => r.type == type);
 }
 
-function parseChapterCommon(chapter: any): { pages: number, latestGroup: string | null } {
+function parseChapterCommon(chapter: any): { pages: number, latestGroups: string[], latestGroup: string | null } {
   const pages: number = Number(chapter.attributes.pages);
-  const latestGroup: string | null = nullIfEmpty(rels(chapter, 'scanlation_group').map((r) => r.attributes.name).join('; '));
-  return { pages, latestGroup };
+  const latestGroups: string[] = rels(chapter, 'scanlation_group').map((r) => r.attributes.name);
+  const latestGroup: string | null = nullIfEmpty(latestGroups.join('; '));
+  return { pages, latestGroups, latestGroup };
 }
 
 const queryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
@@ -84,13 +85,13 @@ const queryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
   .addQueryParameter('contentRating', CONTENT_RATINGS)
   .preCompile();
 
-async function findUpdatedManga(mangaIds: string[], potentialMangaIds: Array<[string, boolean]>, favoriteGroups: string[], latestUpdate: number): Promise<{ updatedManga: MangaQuerySubmission[] | number | false, updatedPotentialManga: MangaQuerySubmission[], hitPageFetchLimit: boolean }> {
+async function findUpdatedManga(mangaIds: string[], potentialMangaIds: Array<[string, boolean]>, favoriteGroups: string[], latestUpdate: number): Promise<{ updatedManga: MangaQuerySubmission[] | number | false, updatedPotentialManga: PotentialMangaQuerySubmission[], hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
     let loadNextPage: boolean = true;
     let hitPageFetchLimit: boolean = false;
     const updatedManga: MangaQuerySubmission[] = [];
-    const updatedPotentialManga: MangaQuerySubmission[] = [];
+    const updatedPotentialManga: PotentialMangaQuerySubmission[] = [];
     const time: Date = new Date(latestUpdate);
     const updatedAt: string = time.toISOString().split('.')[0];
 
@@ -122,7 +123,7 @@ async function findUpdatedManga(mangaIds: string[], potentialMangaIds: Array<[st
       }
 
       for(const chapter of json.data) {
-        const { pages, latestGroup } = parseChapterCommon(chapter);
+        const { pages, latestGroups, latestGroup } = parseChapterCommon(chapter);
         const mangaId: string = rels(chapter, 'manga')[0]?.id;
 
         if(pages > 0) {
@@ -130,9 +131,10 @@ async function findUpdatedManga(mangaIds: string[], potentialMangaIds: Array<[st
             if(!updatedManga.some((m) => m.mangaId == mangaId)) {
               updatedManga.push({ mangaId, latestGroup });
             }
-          } else if(includedPotentialMangaIds.includes(mangaId) || (!excludedPotentialMangaIds.includes(mangaId) && latestGroup && favoriteGroups.includes(latestGroup))) {
+          } else if(includedPotentialMangaIds.includes(mangaId) || (!excludedPotentialMangaIds.includes(mangaId) && latestGroups.length > 0 && latestGroups.some((g) => favoriteGroups.includes(g)))) {
             if(!updatedPotentialManga.some((m) => m.mangaId == mangaId)) {
-              updatedPotentialManga.push({ mangaId, latestGroup });
+              const triggeringGroup: string = latestGroups.find((g) => favoriteGroups.includes(g))!;
+              updatedPotentialManga.push({ mangaId, latestGroup, triggeringGroup });
             }
           }
         }

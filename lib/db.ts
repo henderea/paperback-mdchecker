@@ -193,6 +193,10 @@ export declare interface MangaQuerySubmission {
   latestGroup: string | null;
 }
 
+export declare interface PotentialMangaQuerySubmission extends MangaQuerySubmission {
+  triggeringGroup: string;
+}
+
 export async function updateMangaRecordsForQuery(mangaIds: MangaQuerySubmission[] | { mangaIds: string[] }, epoch: number): Promise<void> {
   if(Array.isArray(mangaIds)) {
     for(const { mangaId, latestGroup } of mangaIds) {
@@ -203,9 +207,9 @@ export async function updateMangaRecordsForQuery(mangaIds: MangaQuerySubmission[
   }
 }
 
-export async function updatePotentialMangaRecordsForQuery(mangaIds: MangaQuerySubmission[], epoch: number): Promise<void> {
-  for(const { mangaId, latestGroup } of mangaIds) {
-    await query('insert into potential_manga (manga_id, triggering_group, first_update, last_update, latest_group) values ($1, $2, $3, $3, $2) on conflict (manga_id) do update set last_update = EXCLUDED.last_update, latest_group = EXCLUDED.latest_group', [mangaId, latestGroup, epoch]);
+export async function updatePotentialMangaRecordsForQuery(mangaIds: PotentialMangaQuerySubmission[], epoch: number): Promise<void> {
+  for(const { mangaId, latestGroup, triggeringGroup } of mangaIds) {
+    await query('insert into potential_manga (manga_id, triggering_group, first_update, last_update, latest_group) values ($1, $2, $3, $3, $4) on conflict (manga_id) do update set last_update = EXCLUDED.last_update, latest_group = EXCLUDED.latest_group', [mangaId, triggeringGroup, epoch, latestGroup]);
   }
 }
 
