@@ -161,6 +161,7 @@ create index ix_potential_manga_exclude_tgroup on potential_manga (exclude, trig
 create index ix_potential_manga_exclude_mdemographic on potential_manga (exclude, manga_demographic);
 create index ix_potential_manga_exclude_tgroup_mdemographic_mid on potential_manga (exclude, triggering_group, manga_demographic, manga_id);
 
+drop view potential_manga_view;
 create view potential_manga_view as
   select manga_id,
          triggering_group,
