@@ -28,6 +28,7 @@ const MANGADEX_API: string = 'https://api.mangadex.org';
 
 const MAX_REQUESTS: number = 100;
 const PAGE_SIZE: number = 100;
+const POTENTIAL_TITLE_CHECK_EXTRA: number = 20;
 
 const CONTENT_RATINGS: string[] = ['safe', 'suggestive', 'erotica', 'pornographic'];
 
@@ -320,31 +321,29 @@ async function queryTitles(): Promise<number | false> {
         await addFailedTitles(mangaIds, epoch);
       }
     }
+    const potentialMangaIds: string[] | null = await getTitleCheckPotentialMangaIds(Math.min(PAGE_SIZE, PAGE_SIZE + POTENTIAL_TITLE_CHECK_EXTRA - (mangaIds?.length ?? 0)), epoch - Duration.DAYS(2));
     let potentialMangaCount: number = -1;
-    if(!mangaIds || mangaIds.length < PAGE_SIZE) {
-      const potentialMangaIds: string[] | null = await getTitleCheckPotentialMangaIds(PAGE_SIZE - (mangaIds?.length ?? 0), epoch - Duration.DAYS(2));
-      if(potentialMangaIds && potentialMangaIds.length > 0) {
-        const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(potentialMangaIds);
-        potentialMangaCount = mangas?.length ?? 0;
-        if(mangas && mangas.length > 0) {
-          await updatePotentialMangaTitles(mangas, epoch);
-          // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
-          await cleanFailedTitles(potentialMangaIds);
-          if(mangas.length < potentialMangaIds.length && mangas.length < (PAGE_SIZE - (mangaIds?.length ?? 0))) {
-            const fetchedIds: string[] = mangas.map((m) => m.id);
-            const missingIds: string[] = _difference(mangaIds, fetchedIds);
-            const missingCount: number = missingIds.length;
-            if(missingCount > 0) {
-              console.log(`Failed potential title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
-              await addFailedTitles(missingIds, epoch);
-            }
+    if(potentialMangaIds && potentialMangaIds.length > 0) {
+      const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(potentialMangaIds);
+      potentialMangaCount = mangas?.length ?? 0;
+      if(mangas && mangas.length > 0) {
+        await updatePotentialMangaTitles(mangas, epoch);
+        // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+        await cleanFailedTitles(potentialMangaIds);
+        if(mangas.length < potentialMangaIds.length && mangas.length < PAGE_SIZE) {
+          const fetchedIds: string[] = mangas.map((m) => m.id);
+          const missingIds: string[] = _difference(mangaIds, fetchedIds);
+          const missingCount: number = missingIds.length;
+          if(missingCount > 0) {
+            console.log(`Failed potential title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
+            await addFailedTitles(missingIds, epoch);
           }
-        } else {
-          console.log(`No potential titles were able to be fetched after ${formatDuration(Date.now() - epoch)}`);
-          console.log(`Failed potential title update on ${potentialMangaIds.length} title${potentialMangaIds.length == 1 ? '' : 's'}:\n${potentialMangaIds.join('\n')}`);
-          await cleanFailedTitles(potentialMangaIds);
-          await addFailedTitles(potentialMangaIds, epoch);
         }
+      } else {
+        console.log(`No potential titles were able to be fetched after ${formatDuration(Date.now() - epoch)}`);
+        console.log(`Failed potential title update on ${potentialMangaIds.length} title${potentialMangaIds.length == 1 ? '' : 's'}:\n${potentialMangaIds.join('\n')}`);
+        await cleanFailedTitles(potentialMangaIds);
+        await addFailedTitles(potentialMangaIds, epoch);
       }
     }
     let count: number;
