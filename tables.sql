@@ -14,6 +14,7 @@ create table user_manga (
   manga_title text,
   manga_status text,
   manga_content_rating text,
+  manga_demographic text,
   last_volume text,
   last_chapter text,
   latest_group text,
@@ -26,6 +27,7 @@ create table user_manga (
   constraint fk_user_manga_user_id foreign key (user_id) references user_id (user_id)
 );
 
+create index ix_user_manga_manga_id on user_manga (manga_id);
 create index ix_user_manga_mid_lcheck on user_manga (manga_id, last_check);
 create index ix_user_manga_uid_mid_lcheck_lupdate_mtitle on user_manga (user_id, manga_id, last_check, last_update, manga_title);
 create index ix_user_manga_uid_lcheck_lupdate on user_manga (user_id, last_check, last_update);
@@ -37,7 +39,8 @@ create index ix_user_manga_lcheck_mid on user_manga (last_check, manga_id);
 create index ix_user_manga_uid_mid_mtitle on user_manga (user_id, manga_id, manga_title);
 create index ix_user_manga_mstatus_mid_mtitle on user_manga (manga_status, manga_id, manga_title);
 
-create or replace view user_manga_view as
+drop view user_manga_view;
+create view user_manga_view as
   select user_id,
          manga_id,
          case when last_check = 0 then null else timezone('US/Eastern', to_timestamp(last_check / 1000.0)) end as last_check,
@@ -45,6 +48,7 @@ create or replace view user_manga_view as
          manga_title,
          manga_status,
          manga_content_rating,
+         manga_demographic,
          last_volume,
          last_chapter,
          latest_group,
@@ -66,7 +70,8 @@ create table update_check (
 
 create index ix_update_check_cstart_time_ucount on update_check (check_start_time, update_count);
 
-create or replace view update_check_view as
+drop view update_check_view;
+create view update_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
          case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
@@ -84,7 +89,8 @@ create table title_check (
 
 create index ix_title_check_cstart_time_ccount on title_check (check_start_time, check_count);
 
-create or replace view title_check_view as
+drop view title_check_view;
+create view title_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
          case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
@@ -103,7 +109,8 @@ create table deep_check (
 create index ix_deep_check_cstart_time_ucount on deep_check (check_start_time, update_count);
 create index ix_deep_check_cstart_time_ccount on deep_check (check_start_time, check_count);
 
-create or replace view deep_check_view as
+drop view deep_check_view;
+create view deep_check_view as
   select timezone('US/Eastern', to_timestamp(check_start_time / 1000.0)) as check_start_time,
          case when check_end_time is null then null else timezone('US/Eastern', to_timestamp(check_end_time / 1000.0)) end as check_end_time,
          case when check_end_time is null then null else check_end_time - check_start_time end as check_millis,
@@ -121,3 +128,53 @@ create table failed_titles (
 );
 
 create index ix_failed_titles_lfailure_mid on failed_titles (last_failure, manga_id);
+
+create table favorite_groups (
+  group_name text not null,
+  constraint pk_favorite_groups primary key (group_name)
+);
+
+create table favorite_demographics (
+  demographic text not null,
+  constraint pk_favorite_demographics primary key (demographic)
+);
+
+create table potential_manga (
+  manga_id text not null,
+  triggering_group text not null,
+  first_update bigint not null,
+  last_update bigint not null,
+  manga_title text,
+  manga_status text,
+  manga_content_rating text,
+  manga_demographic text,
+  last_volume text,
+  last_chapter text,
+  latest_group text,
+  exclude boolean not null default false,
+  last_title_check bigint not null default 0,
+  constraint pk_potential_manga primary key (manga_id)
+);
+
+create index ix_potential_manga_exclude_mid on potential_manga (exclude, manga_id);
+create index ix_potential_manga_exclude_tgroup on potential_manga (exclude, triggering_group);
+create index ix_potential_manga_exclude_mdemographic on potential_manga (exclude, manga_demographic);
+create index ix_potential_manga_exclude_tgroup_mdemographic_mid on potential_manga (exclude, triggering_group, manga_demographic, manga_id);
+
+create view potential_manga_view as
+  select manga_id,
+         triggering_group,
+         timezone('US/Eastern', to_timestamp(first_update / 1000.0)) as first_update,
+         timezone('US/Eastern', to_timestamp(last_update / 1000.0)) as last_update,
+         manga_title,
+         manga_status,
+         manga_content_rating,
+         manga_demographic,
+         case when last_volume is null and last_chapter is null then null when last_volume is null then 'c' || last_chapter when last_chapter is null then 'v' || last_volume else 'v' || last_volume || ' c' || last_chapter end as ends_at,
+         latest_group,
+         timezone('US/Eastern', to_timestamp(last_title_check / 1000.0)) as last_title_check
+  from potential_manga
+  where exclude = false and
+        triggering_group in (select distinct group_name from favorite_groups) and
+        (manga_demographic is null OR manga_demographic in (select distinct demographic from favorite_demographics)) and
+        manga_id not in (select distinct manga_id from user_manga);

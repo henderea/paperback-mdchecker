@@ -16,6 +16,7 @@ export async function shutdownClient(): Promise<void> {
   await client.end();
 }
 
+// regular query
 async function query<T extends QueryResultRow>(text: string, values: any[] = [], rowMode: string | null = null): Promise<QueryResult<T>> {
   const q: { text: string, values: any[], rowMode?: string } = { text, values };
   if(rowMode) {
@@ -24,10 +25,12 @@ async function query<T extends QueryResultRow>(text: string, values: any[] = [],
   return client.query(q);
 }
 
+// array query
 async function aQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<QueryResult<T>> {
   return query(text, values, 'array');
 }
 
+// single number query
 async function snQuery(text: string, values: any[] = []): Promise<number | null> {
   const result: QueryResult<[number]> = await aQuery(text, values);
   if(resultEmpty(result)) {
@@ -36,6 +39,7 @@ async function snQuery(text: string, values: any[] = []): Promise<number | null>
   return ensureInt(result.rows[0][0]);
 }
 
+// single column query
 async function scQuery<T>(text: string, values: any[] = []): Promise<T[] | null> {
   const result: QueryResult<[T]> = await aQuery(text, values);
   if(resultEmpty(result)) {
@@ -44,6 +48,7 @@ async function scQuery<T>(text: string, values: any[] = []): Promise<T[] | null>
   return result.rows.map((r) => r[0]);
 }
 
+// single row query
 async function srQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<T | null> {
   const result: QueryResult<T> = await query(text, values);
   if(resultEmpty(result)) {
@@ -52,6 +57,7 @@ async function srQuery<T extends QueryResultRow>(text: string, values: any[] = [
   return result.rows[0];
 }
 
+// list query
 async function lQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<T[] | null> {
   const result: QueryResult<T> = await query(text, values);
   if(resultEmpty(result)) {
@@ -60,6 +66,7 @@ async function lQuery<T extends QueryResultRow>(text: string, values: any[] = []
   return result.rows;
 }
 
+// list array query
 async function laQuery<T extends QueryResultRow>(text: string, values: any[] = []): Promise<T[] | null> {
   const result: QueryResult<T> = await aQuery(text, values);
   if(resultEmpty(result)) {
@@ -147,6 +154,18 @@ export async function getLatestUpdate(): Promise<number> {
   return await snQuery('select max(last_update) as latest_update from user_manga where last_update != last_deep_check') ?? -1;
 }
 
+export async function getPotentialManga(): Promise<Array<[string, boolean]> | null> {
+  return laQuery<[string, boolean]>('select manga_id, exclude from potential_manga');
+}
+
+export async function getFavoriteGroups(): Promise<string[] | null> {
+  return scQuery('select distinct group_name from favorite_groups');
+}
+
+export async function getTitleCheckPotentialMangaIds(limit: number, maxCheck: number): Promise<string[] | null> {
+  return scQuery('select manga_id from potential_manga where last_title_check <= $2 group by manga_id order by min(last_title_check) asc, max(last_update) desc, manga_id asc limit $1', [limit, maxCheck]);
+}
+
 export declare interface MangaInfo {
   id: string;
   title: string | null;
@@ -161,7 +180,8 @@ export declare interface MangaTitleCheckInfo extends MangaInfo {
   status: string | null;
   lastVolume: string | null;
   lastChapter: string | null;
-  contentRating: string | null
+  contentRating: string | null;
+  demographic: string | null;
 }
 
 export declare interface MangaUpdateInfo extends MangaInfo {
@@ -180,6 +200,12 @@ export async function updateMangaRecordsForQuery(mangaIds: MangaQuerySubmission[
     }
   } else {
     await query('update user_manga set last_update = $2, has_no_chapters = false where manga_id = ANY ($1)', [mangaIds.mangaIds, epoch]);
+  }
+}
+
+export async function updatePotentialMangaRecordsForQuery(mangaIds: MangaQuerySubmission[], epoch: number): Promise<void> {
+  for(const { mangaId, latestGroup } of mangaIds) {
+    await query('insert into potential_manga (manga_id, triggering_group, first_update, last_update, latest_group) values ($1, $2, $3, $3, $2) on conflict (manga_id) do update set last_update = EXCLUDED.last_update, latest_group = EXCLUDED.latest_group', [mangaId, latestGroup, epoch]);
   }
 }
 
@@ -203,7 +229,15 @@ export async function updateMangaRecordsForDeepQuery(checkedManga: MangaDeepQuer
 export async function updateMangaTitles(mangas: MangaTitleCheckInfo[], epoch: number): Promise<void> {
   for(const manga of mangas) {
     if(manga.title) {
-      await query('update user_manga set manga_title = $2, manga_status = $3, last_title_check = $4, last_volume = $5, last_chapter = $6, manga_content_rating = $7 where manga_id = $1', [manga.id, manga.title, manga.status, epoch, manga.lastVolume, manga.lastChapter, manga.contentRating]);
+      await query('update user_manga set manga_title = $2, manga_status = $3, manga_demographic = $4, last_title_check = $5, last_volume = $6, last_chapter = $7, manga_content_rating = $8 where manga_id = $1', [manga.id, manga.title, manga.status, manga.demographic, epoch, manga.lastVolume, manga.lastChapter, manga.contentRating]);
+    }
+  }
+}
+
+export async function updatePotentialMangaTitles(mangas: MangaTitleCheckInfo[], epoch: number): Promise<void> {
+  for(const manga of mangas) {
+    if(manga.title) {
+      await query('update potential_manga set manga_title = $2, manga_status = $3, manga_demographic = $4, last_title_check = $5, last_volume = $6, last_chapter = $7, manga_content_rating = $8 where manga_id = $1', [manga.id, manga.title, manga.status, manga.demographic, epoch, manga.lastVolume, manga.lastChapter, manga.contentRating]);
     }
   }
 }

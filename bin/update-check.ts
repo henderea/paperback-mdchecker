@@ -12,7 +12,7 @@ import { decode as decodeHTMLEntity } from 'html-entities';
 
 // import ipc from 'node-ipc';
 
-import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery } from 'lib/db';
+import { shutdownClient, getMangaIdsForQuery, getTitleCheckMangaIds, getDeepCheckMangaIds, getLatestUpdate, updateMangaRecordsForQuery, addUpdateCheck, updateCompletedUpdateCheck, addTitleCheck, updateCompletedTitleCheck, addDeepCheck, updateInProgressDeepCheck, updateCompletedDeepCheck, updateMangaTitles, addFailedTitles, cleanFailedTitles, listUserPushUpdates, updateMangaRecordsForDeepQuery, getPotentialManga, getTitleCheckPotentialMangaIds, updatePotentialMangaTitles, getFavoriteGroups, updatePotentialMangaRecordsForQuery } from 'lib/db';
 
 import { URLBuilder, PreCompiledUrl } from 'lib/UrlBuilder';
 
@@ -84,14 +84,18 @@ const queryUrl: PreCompiledUrl = new URLBuilder(MANGADEX_API)
   .addQueryParameter('contentRating', CONTENT_RATINGS)
   .preCompile();
 
-async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promise<{ updatedManga: MangaQuerySubmission[] | number | false, hitPageFetchLimit: boolean }> {
+async function findUpdatedManga(mangaIds: string[], potentialMangaIds: Array<[string, boolean]>, favoriteGroups: string[], latestUpdate: number): Promise<{ updatedManga: MangaQuerySubmission[] | number | false, updatedPotentialManga: MangaQuerySubmission[], hitPageFetchLimit: boolean }> {
   try {
     let offset: number = 0;
     let loadNextPage: boolean = true;
     let hitPageFetchLimit: boolean = false;
     const updatedManga: MangaQuerySubmission[] = [];
+    const updatedPotentialManga: MangaQuerySubmission[] = [];
     const time: Date = new Date(latestUpdate);
     const updatedAt: string = time.toISOString().split('.')[0];
+
+    const includedPotentialMangaIds: string[] = potentialMangaIds.filter((m) => !m[1]).map((m) => m[0]);
+    const excludedPotentialMangaIds: string[] = potentialMangaIds.filter((m) => m[1]).map((m) => m[0]);
 
     while(loadNextPage) {
       const url: string = queryUrl.buildUrl({ offset, publishAtSince: updatedAt });
@@ -106,7 +110,7 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       // If we have no content, there are no updates available
       if(response.statusCode == 204) {
         console.log('Response was 204');
-        return { updatedManga, hitPageFetchLimit };
+        return { updatedManga, updatedPotentialManga, hitPageFetchLimit };
       }
 
       const json = (typeof response.body) === 'string' ? JSON.parse(response.body) : response.body;
@@ -121,8 +125,16 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
         const { pages, latestGroup } = parseChapterCommon(chapter);
         const mangaId: string = rels(chapter, 'manga')[0]?.id;
 
-        if(pages > 0 && mangaIds.includes(mangaId) && !updatedManga.some((m) => m.mangaId == mangaId)) {
-          updatedManga.push({ mangaId, latestGroup });
+        if(pages > 0) {
+          if(mangaIds.includes(mangaId)) {
+            if(!updatedManga.some((m) => m.mangaId == mangaId)) {
+              updatedManga.push({ mangaId, latestGroup });
+            }
+          } else if(includedPotentialMangaIds.includes(mangaId) || (!excludedPotentialMangaIds.includes(mangaId) && latestGroup && favoriteGroups.includes(latestGroup))) {
+            if(!updatedPotentialManga.some((m) => m.mangaId == mangaId)) {
+              updatedPotentialManga.push({ mangaId, latestGroup });
+            }
+          }
         }
       }
 
@@ -136,13 +148,13 @@ async function findUpdatedManga(mangaIds: string[], latestUpdate: number): Promi
       }
     }
 
-    return { updatedManga, hitPageFetchLimit };
+    return { updatedManga, updatedPotentialManga, hitPageFetchLimit };
   } catch (e) {
     const rv: number | false = (e as any).response?.statusCode ?? false;
     if(!rv) {
       console.error('Encountered error fetching updates', e);
     }
-    return { updatedManga: rv, hitPageFetchLimit: false };
+    return { updatedManga: rv, updatedPotentialManga: [], hitPageFetchLimit: false };
   }
 }
 
@@ -184,8 +196,10 @@ async function queryUpdates(): Promise<number | false> {
       await updateCompletedUpdateCheck(epoch, Date.now(), -1, false);
       return -1;
     }
+    const potentialMangaIds: Array<[string, boolean]> = await getPotentialManga() ?? [];
+    const favoriteGroups: string[] = await getFavoriteGroups() ?? [];
     const latestUpdate: number = await determineLatestUpdate(epoch);
-    const { updatedManga, hitPageFetchLimit } = await findUpdatedManga(mangaIds, latestUpdate);
+    const { updatedManga, updatedPotentialManga, hitPageFetchLimit } = await findUpdatedManga(mangaIds, potentialMangaIds, favoriteGroups, latestUpdate);
     if(updatedManga === false) { // unknown error
       await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
       return -2;
@@ -200,6 +214,9 @@ async function queryUpdates(): Promise<number | false> {
         await updateCompletedUpdateCheck(epoch, Date.now(), -2, hitPageFetchLimit);
         return -2;
       }
+    }
+    if(updatedPotentialManga && updatedPotentialManga.length > 0) {
+      await updatePotentialMangaRecordsForQuery(updatedPotentialManga, epoch);
     }
     if(!updatedManga || updatedManga.length == 0) { // no updates found
       await updateCompletedUpdateCheck(epoch, Date.now(), 0, hitPageFetchLimit);
@@ -256,13 +273,14 @@ async function getMangaTitleCheckInfo(mangaIds: string[]): Promise<MangaTitleChe
       const lastVolume: string | null = nullIfEmpty(mangaDetails.lastVolume);
       const lastChapter: string | null = nullIfEmpty(mangaDetails.lastChapter);
       const contentRating: string | null = nullIfEmpty(mangaDetails.contentRating);
+      const demographic: string | null = nullIfEmpty(mangaDetails.publicationDemographic);
       // const title = decodeHTMLEntity(mangaDetails.title.en ?? mangaDetails.altTitles.map((x: any) => x.en ?? Object.values(x).find((v) => v !== undefined)).find((t: any) => t !== undefined)) ?? null;
-      mangas.push({ id, title, status, lastVolume, lastChapter, contentRating });
+      mangas.push({ id, title, status, lastVolume, lastChapter, contentRating, demographic });
     }
     return mangas;
   } catch (e) {
     console.error('Encountered error during getMangaInfo', e);
-    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null, contentRating: null }));
+    return mangaIds.map((id) => ({ id, title: null, status: null, lastVolume: null, lastChapter: null, contentRating: null, demographic: null }));
   }
 }
 
@@ -276,8 +294,10 @@ async function queryTitles(): Promise<number | false> {
   try {
     await addTitleCheck(epoch);
     const mangaIds: string[] | null = await getTitleCheckMangaIds(PAGE_SIZE, epoch - Duration.DAYS(2));
+    let mangaCount: number = -1;
     if(mangaIds && mangaIds.length > 0) {
       const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(mangaIds);
+      mangaCount = mangas?.length ?? 0;
       if(mangas && mangas.length > 0) {
         await updateMangaTitles(mangas, epoch);
         // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
@@ -297,12 +317,46 @@ async function queryTitles(): Promise<number | false> {
         await cleanFailedTitles(mangaIds);
         await addFailedTitles(mangaIds, epoch);
       }
-      await updateCompletedTitleCheck(epoch, Date.now(), mangas.length);
-      return mangas.length;
-    } else {
-      await updateCompletedTitleCheck(epoch, Date.now(), -1);
-      return -1;
     }
+    let potentialMangaCount: number = -1;
+    if(!mangaIds || mangaIds.length < PAGE_SIZE) {
+      const potentialMangaIds: string[] | null = await getTitleCheckPotentialMangaIds(PAGE_SIZE - (mangaIds?.length ?? 0), epoch - Duration.DAYS(2));
+      if(potentialMangaIds && potentialMangaIds.length > 0) {
+        const mangas: MangaTitleCheckInfo[] = await getMangaTitleCheckInfo(potentialMangaIds);
+        potentialMangaCount = mangas?.length ?? 0;
+        if(mangas && mangas.length > 0) {
+          await updatePotentialMangaTitles(mangas, epoch);
+          // console.log(`Finished title update for ${mangas?.length ?? 0} titles in ${formatDuration(Date.now() - start)}`);
+          await cleanFailedTitles(potentialMangaIds);
+          if(mangas.length < potentialMangaIds.length && mangas.length < (PAGE_SIZE - (mangaIds?.length ?? 0))) {
+            const fetchedIds: string[] = mangas.map((m) => m.id);
+            const missingIds: string[] = _difference(mangaIds, fetchedIds);
+            const missingCount: number = missingIds.length;
+            if(missingCount > 0) {
+              console.log(`Failed potential title update on ${missingCount} title${missingCount == 1 ? '' : 's'}:\n${missingIds.join('\n')}`);
+              await addFailedTitles(missingIds, epoch);
+            }
+          }
+        } else {
+          console.log(`No potential titles were able to be fetched after ${formatDuration(Date.now() - epoch)}`);
+          console.log(`Failed potential title update on ${potentialMangaIds.length} title${potentialMangaIds.length == 1 ? '' : 's'}:\n${potentialMangaIds.join('\n')}`);
+          await cleanFailedTitles(potentialMangaIds);
+          await addFailedTitles(potentialMangaIds, epoch);
+        }
+      }
+    }
+    let count: number;
+    if(mangaCount < 0 && potentialMangaCount < 0) {
+      count = -1;
+    } else if(mangaCount < 0) {
+      count = potentialMangaCount;
+    } else if(potentialMangaCount < 0) {
+      count = mangaCount;
+    } else {
+      count = mangaCount + potentialMangaCount;
+    }
+    await updateCompletedTitleCheck(epoch, Date.now(), count);
+    return count;
   } catch (e) {
     console.error(`Encountered error fetching titles after ${formatDuration(Date.now() - epoch)}`, e);
     await catchVoidError(updateCompletedTitleCheck(epoch, Date.now(), -2), 'Encountered error updating title check result');
